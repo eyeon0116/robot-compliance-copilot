@@ -148,6 +148,30 @@ td.num{font-variant-numeric:tabular-nums}
 ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}
 .nowrap{white-space:nowrap}
 select.sfp{width:auto;padding:3px 4px;font-family:var(--f-mono);font-size:12px}
+.reset-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:flex-end;border-top:1px dashed var(--line-2);padding-top:14px;margin-top:4px}
+.reset-row .hint{font-size:12.5px;color:var(--ink-2);margin-right:auto}
+.btn.quiet{background:none;border-color:transparent;color:var(--ink-2);font-size:13px;padding:7px 10px}
+.btn.quiet:hover{color:var(--ink);border-color:var(--line-3)}
+.btn.danger{border-color:var(--warn);color:var(--warn);background:rgba(242,140,91,.08)}
+.undo-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100vw - 32px);background:var(--sheet-2);border:1px solid var(--line-3);border-radius:10px;padding:12px 16px;box-shadow:0 12px 40px rgba(0,0,0,.5);font-size:13.5px}
+.undo-toast[hidden]{display:none}
+.hz-list{display:grid;gap:12px}
+.hz-card{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:grid;gap:12px}
+.hz-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.hz-title{display:flex;gap:10px;align-items:baseline;min-width:0;flex:1 1 320px}
+.hz-id{font-family:var(--f-mono);font-size:12px;color:var(--signal);border:1px solid rgba(242,179,61,.4);border-radius:4px;padding:1px 6px;flex:none}
+.hz-title b{font-size:15.5px;line-height:1.45}
+.hz-sfs{display:flex;gap:6px;flex-wrap:wrap}
+.hz-sfs span{font-family:var(--f-mono);font-size:11.5px;background:var(--signal-tint);color:var(--signal);border-radius:999px;padding:2px 9px}
+.hz-body{margin:0;display:grid;grid-template-columns:72px 1fr;gap:6px 14px;font-size:14px;line-height:1.65}
+.hz-body dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding-top:3px}
+.hz-body dd{margin:0;color:var(--ink)}
+.hz-meta{display:flex;gap:6px 18px;flex-wrap:wrap;font-family:var(--f-mono);font-size:12px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:10px}
+.hz-meta b{color:var(--ink);font-weight:500}
+.sf-t td{line-height:1.6;padding:14px}
+.sf-t td .muted{margin-top:4px}
+.set-h{margin-top:8px}
+@media (max-width:520px){.hz-body{grid-template-columns:1fr}.hz-body dt{padding-top:0}}
 .linkbtn{background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
 .flagnote{font-size:12px;color:var(--warn);margin-top:4px}
 hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
@@ -384,6 +408,13 @@ input[type=range]{width:100%;accent-color:var(--signal)}
 .why-card p{color:var(--ink-2);font-size:14px}
 .why-cmp{display:grid;gap:14px}
 .why-cmp h3{font-size:22px}
+.why-eu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:-40px}
+.why-eu>div{background:var(--sheet);padding:22px 24px;display:grid;gap:8px;align-content:start}
+.why-eu .ix{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink-2)}
+.why-eu .ix.sig{color:var(--signal)}
+.why-eu h3{font-size:18px}
+.why-eu p{color:var(--ink-2);font-size:14px;line-height:1.65}
+@media (max-width:720px){.why-eu{grid-template-columns:1fr}}
 .why-note{font-size:12.5px;color:var(--ink-2);max-width:80ch}
 @media (max-width:900px){.why-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.why-facts{grid-template-columns:1fr}}
@@ -528,13 +559,13 @@ footer.site .wrap{display:grid;gap:32px}
   </div>
   <div class="wrap land-main">
     <div class="eyebrow land-eyebrow">ISO 13482 · ISO 13849-1 · EU Machinery Regulation</div>
-    <h1 class="land-h" data-ko="로봇 회사의&lt;br&gt;&lt;em&gt;사내 안전팀&lt;/em&gt;,&lt;br&gt;AI가 대신합니다.">The safety team<br>your robot company<br><em>doesn&rsquo;t have yet.</em></h1>
+    <h1 class="land-h" data-ko="판단은 엔지니어가,&lt;br&gt;&lt;em&gt;정리는 AI가.&lt;/em&gt;">Engineers decide.<br><em>AI does the groundwork.</em></h1>
     <p class="land-sub" data-ko="Robot type 분류부터 적용 규격, hazard, safety function별 PLr, gap report까지. 기능안전 엔지니어의 방식으로 몇 분 만에 초안을 만들고, 검토와 최종 서명은 엔지니어가 합니다.">Robot type, every applicable standard, hazards, safety functions with PLr and a gap report, drafted in minutes on a functional-safety engineer&rsquo;s method. Your engineer reviews and signs off.</p>
     <div class="row"><button class="btn primary lg" type="button" data-go="describe" data-ko="시작하기 →">Get started →</button><button class="btn ghost lg" type="button" data-go="hazards" data-ko="검수된 예시 보기">See the reviewed example</button></div>
   </div>
   <div class="wrap land-foot">
     <div class="land-stat"><b id="dday">D-95</b><span data-ko="EU Machinery Regulation 적용까지 (2027년 1월 20일)">until the EU Machinery Regulation applies (20 January 2027)</span></div>
-    <div class="land-stat"><b id="stdCount">12</b><span data-ko="로봇에 맞춰 자동으로 매핑한 functional safety 규격">functional-safety standards mapped to the robot automatically</span></div>
+    <div class="land-stat"><b id="stdCount">12</b><span data-ko="로봇에 맞춰 자동으로 골라 주는 functional safety 규격">functional-safety standards mapped to the robot automatically</span></div>
     <div class="land-stat"><b>&lt;1 min</b><span data-ko="Claude가 hazard, safety function, PLr 초안을 만드는 데 걸린 시간">for Claude to draft the hazards, safety functions and PLr</span></div>
     <button class="scroll-hint" type="button" data-why="1" data-ko="스크롤">Scroll</button>
   </div>
@@ -553,20 +584,24 @@ footer.site .wrap{display:grid;gap:32px}
       <div><b class="sig" id="dday2">D-95</b><span data-ko="이날부터 EU에 파는 로봇은 새 Machinery Regulation 2023/1230을 따라야 합니다">until robots sold into the EU must follow the new Machinery Regulation 2023/1230</span><small data-ko="2027년 1월 20일">20 January 2027</small></div>
       <div><b>&lt;1 min</b><span data-ko="hazard, safety function, PLr 첫 초안이 나오는 시간">for the first draft of hazards, safety functions and PLr</span><small data-ko="CS-1 예시로 측정">Measured on the CS-1 example</small></div>
     </div>
+    <div class="why-eu">
+      <div><span class="ix">EU MACHINERY REGULATION</span><h3 data-ko="EU Machinery Regulation이 뭔가요?">What is the EU Machinery Regulation?</h3><p data-ko="EU에서 기계를 팔 때 지켜야 하는 안전 규정입니다. 서비스 로봇도 여기에 해당합니다. Regulation (EU) 2023/1230은 2006년부터 쓰던 Machinery Directive 2006/42/EC를 대체하고, 2027년 1월 20일부터 EU 모든 회원국에 그대로 적용됩니다.">It is the safety law for machinery sold in the EU, and service robots fall under it. Regulation (EU) 2023/1230 replaces the Machinery Directive 2006/42/EC and applies directly in every EU member state from 20 January 2027.</p></div>
+      <div><span class="ix sig">WHY THE DATE MATTERS</span><h3 data-ko="왜 이 날짜가 중요한가요?">Why does the date matter?</h3><p data-ko="이날 이후 EU 시장에 내놓는 로봇은 새 규정의 안전 요구사항을 충족하고, 그 근거가 되는 기술 문서와 CE 마킹을 갖춰야 합니다. 자율 이동 기계, 스스로 학습하는 안전 기능, 해킹 등으로 인한 오작동 방지 같은 요구사항도 새로 생겼습니다. 지금 개발 중인 로봇은 대부분 이 날짜 이후에 출시되므로, 안전 문서도 지금부터 새 규정 기준으로 준비해야 합니다.">Robots placed on the EU market from that day must meet the new regulation&rsquo;s safety requirements, backed by technical documentation and CE marking. It adds requirements for autonomous mobile machinery, self-learning safety functions and protection against corruption such as hacking. Most robots in development today will launch after that date, so their safety documents should be prepared against the new rules now.</p></div>
+    </div>
     <div class="why-cards">
-      <div class="why-card"><span class="ix">01</span><h3 data-ko="규격을 몰라도 됩니다">No standards degree needed</h3><p data-ko="12개 규정·규격 중 뭐가 해당되는지 몰라도 됩니다. 고객에게 설명하듯 로봇을 적으면, 해당 규격과 그 이유가 정리돼서 나옵니다.">You don’t need to know which of the 12 regulations and standards apply. Describe the robot like you would to a customer, and the list comes back with the reason for each.</p></div>
-      <div class="why-card"><span class="ix">02</span><h3 data-ko="대행사 부르기 전에 숙제 끝내기">Do the homework before you pay</h3><p data-ko="대행 비용의 큰 부분은 hazard와 규격을 처음 정리하는 일입니다. 그걸 끝내고 가면 빈 종이가 아니라 검토에만 돈을 쓰게 됩니다.">Most of an agency bill goes on the first pass: listing hazards and standards. Walk in with that already done and you pay for review, not for a blank page.</p></div>
-      <div class="why-card"><span class="ix">03</span><h3 data-ko="출시까지 남은 일이 한눈에">See what’s left before launch</h3><p data-ko="Gap report가 남은 일을 해야 할 순서대로 보여줍니다. 심사 때 알게 되는 대신, 지금 사람과 예산을 계획할 수 있습니다.">The gap report lists every open item in the order to tackle it, so you can plan people and budget now instead of finding out at the assessment.</p></div>
-      <div class="why-card"><span class="ix">04</span><h3 data-ko="엔지니어 한 명이면 됩니다">One engineer is enough</h3><p data-ko="따로 안전팀을 만들 필요가 없습니다. 지금 있는 엔지니어가 초안을 검토하고 확정하면 되고, 정리와 계산은 도구가 합니다.">No dedicated safety team required. Your existing engineer reviews the draft and signs off; the tool does the listing and the arithmetic.</p></div>
+      <div class="why-card"><span class="ix">01</span><h3 data-ko="규격을 몰라도 됩니다">No standards degree needed</h3><p data-ko="어떤 규격이 해당되는지 몰라도 됩니다. 고객에게 설명하듯 로봇을 적으면, 12개 규정·규격 중 해당하는 것과 그 이유를 정리해 드립니다.">You don’t need to know which of the 12 regulations and standards apply. Describe the robot like you would to a customer, and the list comes back with the reason for each.</p></div>
+      <div class="why-card"><span class="ix">02</span><h3 data-ko="대행사 부르기 전에 숙제 끝내기">Do the homework before you pay</h3><p data-ko="대행 비용의 큰 부분은 hazard와 규격을 처음 정리하는 일입니다. 이 작업을 먼저 해 두면 검토에만 비용을 쓰면 되고, 대행사도 정리된 초안으로 더 빨리 시작할 수 있습니다.">Most of an agency bill goes on the first pass: listing hazards and standards. Have that done first and you pay for review, and the agency starts from an organised draft instead of a blank page.</p></div>
+      <div class="why-card"><span class="ix">03</span><h3 data-ko="출시까지 남은 일이 한눈에">See what’s left before launch</h3><p data-ko="Gap report가 남은 일을 해야 할 순서대로 보여줍니다. 심사 때 처음 알게 되는 일 없이, 지금부터 사람과 예산을 계획할 수 있습니다.">The gap report lists every open item in the order to tackle it, so you can plan people and budget now instead of finding out at the assessment.</p></div>
+      <div class="why-card"><span class="ix">04</span><h3 data-ko="지금 있는 팀으로 충분합니다">Works with the team you have</h3><p data-ko="새로 사람을 뽑지 않아도 됩니다. 엔지니어는 검토와 판단에 집중하고, 반복되는 정리와 계산은 도구가 맡습니다.">No new hire needed. Your engineers focus on review and judgement, and the tool takes the repetitive listing and arithmetic.</p></div>
       <div class="why-card"><span class="ix">05</span><h3 data-ko="근거 있는 숫자">Numbers you can defend</h3><p data-ko="필요한 안전 등급(PLr)은 AI가 짐작하지 않고 ISO 13482, ISO 13849-1 규칙대로 계산합니다. 모든 줄에 근거 조항이 붙습니다.">Required safety levels (PLr) are calculated by the rules in ISO 13482 and ISO 13849-1, not guessed by AI, and every line points to its clause.</p></div>
       <div class="why-card"><span class="ix">06</span><h3 data-ko="Word·PDF로 바로">Word and PDF on the spot</h3><p data-ko="보고서를 내려받아 그날 바로 컨설턴트, 투자자, 시험기관에 보낼 수 있습니다.">Download the report and send it to your consultant, investor or test lab the same day.</p></div>
     </div>
     <div class="why-cmp">
-      <h3 data-ko="대행사에 처음부터 맡길 때와 비교">Compared with handing it all to an agency</h3>
+      <h3 data-ko="기존 에이전시 vs RCC">Traditional agency vs RCC</h3>
       <div class="tbl-wrap" style="border:0;background:none"><table class="cmp-t">
-        <thead><tr><th></th><th data-ko="대행사에 처음부터">Agency from scratch</th><th>Robot Compliance Copilot</th></tr></thead>
+        <thead><tr><th></th><th data-ko="기존 에이전시">Traditional agency</th><th>RCC</th></tr></thead>
         <tbody>
-          <tr><td data-ko="첫 초안 비용">Cost of the first draft</td><td data-ko="약 1억 원 대행 계약의 일부 (추정)">Part of a ~₩100M agency contract (estimate)</td><td data-ko="누구를 부르기 전에 사내에서 끝남">Done in-house before you call anyone</td></tr>
+          <tr><td data-ko="첫 초안 비용">Cost of the first draft</td><td data-ko="약 1억 원 대행 계약의 일부 (추정)">Part of a ~₩100M agency contract (estimate)</td><td data-ko="사내에서 먼저 끝냄">Done in-house before you call anyone</td></tr>
           <tr><td data-ko="첫 초안까지">Time to a first draft</td><td data-ko="최소 4주 (실무 추정)">4 weeks or more (practitioner estimate)</td><td data-ko="1분 이내">Under a minute</td></tr>
           <tr><td data-ko="필요한 사람">People you need</td><td data-ko="사내 또는 외부 안전 전문가">A safety specialist, in-house or hired</td><td data-ko="지금 있는 엔지니어 한 명">The engineer you already have</td></tr>
           <tr><td data-ko="규격 공부">Studying standards</td><td data-ko="먼저 사서 읽어야 함">Buy and read them first</td><td data-ko="해당 규격과 조항을 정리해 줌">Applicable ones listed for you, with clauses</td></tr>
@@ -646,9 +681,9 @@ footer.site .wrap{display:grid;gap:32px}
   <div class="wrap hero">
     <div class="hero-main">
       <div class="hero-top"><div class="eyebrow" data-ko="워크스페이스 · EU 시장용 서비스 로봇">Workspace · Service robots for the EU</div></div>
-      <h2 class="ws-title" data-ko="사내 안전팀 워크스페이스">In-house safety team workspace</h2>
+      <h2 class="ws-title" data-ko="기능안전 워크스페이스">Functional-safety workspace</h2>
       
-      <p class="tagline" data-ko="사내 안전팀이 하던 첫 작업을 순서대로 합니다: robot type 분류, 적용 규격 정리, hazard 분석, safety function별 PLr, traceability, 남은 산출물. 모든 결과는 근거 조항과 함께 나오고, 엔지니어가 검토합니다.">It does what an in-house safety team does first, in order: robot type, applicable standards, hazard analysis, PLr per safety function, traceability and the deliverables still missing. Every result comes with its clause and goes to your engineer for review.</p>
+      <p class="tagline" data-ko="안전 문서의 첫 정리 작업을 순서대로 도와줍니다: robot type 분류, 적용 규격 정리, hazard 분석, safety function별 PLr, traceability, 남은 산출물. 모든 결과는 근거 조항과 함께 나오고, 엔지니어가 검토합니다.">It helps with the first pass of the safety documents, in order: robot type, applicable standards, hazard analysis, PLr per safety function, traceability and the deliverables still missing. Every result comes with its clause and goes to your engineer for review.</p>
       <div class="std-strip" aria-label="Standards covered"><span>ISO 13482:2014</span><span>ISO 13849-1:2023</span><span>Regulation (EU) 2023/1230</span></div>
       <div class="row"><button class="btn primary" type="button" id="ctaExample" data-ko="검수된 예시 보기">See the reviewed example</button><button class="btn" type="button" id="ctaStart" data-ko="내 로봇 설명하기">Describe your own robot</button></div>
     </div>
@@ -723,7 +758,7 @@ footer.site .wrap{display:grid;gap:32px}
         <fieldset class="field full"><legend data-ko="Safety 관련 센서와 드라이브">Safety-related sensing and drives</legend><div class="checks" id="f-sensors"></div></fieldset>
         <fieldset class="field full"><legend data-ko="목표 시장">Target markets</legend><div class="checks" id="f-markets"></div></fieldset>
       </div>
-      <div class="row"><button class="btn" id="resetExample" type="button" data-ko="CS-1 예시 다시 불러오기">Reload the CS-1 example</button></div>
+      <div class="reset-row" id="resetRow"><span class="hint" data-ko="입력은 자동으로 반영됩니다. 따로 제출할 필요가 없습니다.">Changes apply as you type. There is nothing to submit.</span><button class="btn quiet" id="resetExample" type="button" data-ko="↺ 입력을 지우고 CS-1 예시로 초기화">↺ Clear and reset to the CS-1 example</button></div>
     </div>
 
     <div class="sheet sticky" id="verdict" aria-live="polite"></div>
@@ -768,12 +803,13 @@ footer.site .wrap{display:grid;gap:32px}
 </section>
 
 </main>
+<div class="undo-toast" id="undoToast" role="status" hidden><span id="undoMsg"></span><button class="btn sm" id="undoBtn" type="button"></button><button class="linkbtn" id="undoClose" type="button" aria-label="Close">✕</button></div>
 </div>
 
 <footer class="site">
   <div class="wrap">
     <div class="ft-grid">
-      <div style="display:grid;gap:10px"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>Robot Compliance Copilot</div><p data-ko="ISO 13482 서비스 로봇을 위한 사내 안전팀 워크스페이스. Bloom × Anthropic 해커톤 프로젝트.">The in-house safety team workspace for ISO 13482 service robots. A Bloom × Anthropic hackathon project.</p></div>
+      <div style="display:grid;gap:10px"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>Robot Compliance Copilot</div><p data-ko="ISO 13482 서비스 로봇을 위한 기능안전 워크스페이스. Bloom × Anthropic 해커톤 프로젝트.">A functional-safety workspace for ISO 13482 service robots. A Bloom × Anthropic hackathon project.</p></div>
       <div><h4 data-ko="워크스페이스">Workspace</h4><ul><li><button type="button" data-go="describe" data-ko="1. 로봇 설명">1. Describe</button></li><li><button type="button" data-go="standards">2. Standards Map</button></li><li><button type="button" data-go="hazards">3. Hazards → PLr</button></li><li><button type="button" data-go="trace">4. Traceability</button></li><li><button type="button" data-go="report">5. Gap Report</button></li></ul></div>
       <div><h4 data-ko="규격">Standards</h4><ul><li>ISO 13482:2014</li><li>ISO 13849-1:2023</li><li>ISO 12100:2010</li><li>Regulation (EU) 2023/1230</li></ul></div>
     </div>
@@ -868,6 +904,18 @@ let S;
 try{ S = JSON.parse(localStorage.getItem('rcc-state')||'null'); }catch(e){ S = null; }
 if(!S || !S.users) S = exampleState();
 function save(){ try{ localStorage.setItem('rcc-state', JSON.stringify(S)); }catch(e){} }
+const FORM_KEYS = ['name','family','restraint','heightMm','massKg','maxSpeedMs','manipulator','users','sensors','markets','overrides','draft'];
+function pristine(){ if(!S.isExample) return false; const e = exampleState(); return FORM_KEYS.every(k=>JSON.stringify(S[k]??null)===JSON.stringify(e[k]??null)) && Object.values(EX_ENV).includes(S.env); }
+let prevS = null, undoTimer = null;
+function loadExample(){
+  prevS = pristine() ? null : JSON.parse(JSON.stringify(S));
+  S = exampleState(); if($('aiNotes')) $('aiNotes').hidden = true; changed();
+  if(prevS){
+    $('undoMsg').textContent = L('Loaded the CS-1 example. Your entries were set aside.','CS-1 예시를 불러왔습니다. 입력하던 내용은 따로 보관해 두었습니다.');
+    $('undoBtn').textContent = L('Restore my entries','내 입력 되돌리기');
+    $('undoToast').hidden = false; clearTimeout(undoTimer); undoTimer = setTimeout(()=>$('undoToast').hidden=true, 15000);
+  }
+}
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -938,7 +986,17 @@ function bindForm(){
   $('f-family').onchange=e=>{S.family=e.target.value;delete S.ai.family;S.flags={};changed();};
   $('f-restraint').onchange=e=>{S.restraint=e.target.value;S.flags={};changed();};
   $('f-manip').onchange=e=>{S.manipulator=e.target.value==='yes';delete S.ai.manipulator;delete S.overrides.noManipulator;changed();};
-  $('resetExample').onclick=()=>{ S=exampleState(); $('aiNotes').hidden=true; changed(); };
+  bindReset();
+}
+function bindReset(){
+  $('resetExample').onclick=()=>{
+    if(pristine()) return;
+    const row = $('resetRow'), keep = row.innerHTML;
+    row.innerHTML = `<span class="hint" style="color:var(--warn)">${L('This clears everything you entered and loads the CS-1 example.','입력한 내용이 모두 지워지고 CS-1 예시로 바뀝니다.')}</span><button class="btn quiet" id="resetNo" type="button">${L('Cancel','취소')}</button><button class="btn danger" id="resetYes" type="button">${L('Clear and reset','지우고 초기화')}</button>`;
+    const restore = ()=>{ row.innerHTML = keep; bindReset(); };
+    $('resetNo').onclick = restore; $('resetYes').onclick = ()=>{ restore(); loadExample(); };
+    $('resetNo').focus();
+  };
 }
 let lastType;
 function renderVerdict(){
@@ -1126,7 +1184,9 @@ function sfpSelect(sf,k,opts,editable){
   return `<select class="sfp" data-sf="${esc(sf.id)}" data-k="${k}" aria-label="${k} for ${esc(sf.id)}">${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
 }
 function setTables(set, t, editable){
-  const hz = set.hazards.map(h=>`<tr><td class="mono">${esc(h.id)}</td><td><b>${esc(h.title)}</b><div class="muted" style="font-size:12.5px">${esc(h.hazardousSituation)}${h.harm?` <i>${L('Harm:','피해:')}</i> ${esc(h.harm)}`:''}</div></td><td class="mono">${(h.annexA||[]).length?'No. '+h.annexA.join(', '):'—'}</td><td class="mono">${esc(h.clause||'')}</td><td class="mono">${(h.safetyFunctions||[]).map(esc).join(', ')}</td></tr>`).join('');
+  const hz = set.hazards.map(h=>`<article class="hz-card"><div class="hz-top"><div class="hz-title"><span class="hz-id">${esc(h.id)}</span><b>${esc(h.title)}</b></div><div class="hz-sfs" aria-label="Safety functions">${(h.safetyFunctions||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>
+    <dl class="hz-body"><dt>${L('Situation','상황')}</dt><dd>${esc(h.hazardousSituation)}</dd>${h.harm?`<dt>${L('Harm','피해')}</dt><dd>${esc(h.harm)}</dd>`:''}</dl>
+    <div class="hz-meta"><span>Annex A <b>${(h.annexA||[]).length?'No. '+h.annexA.map(esc).join(', '):'—'}</b></span><span>${L('Clause','조항')} <b>${esc(h.clause||'—')}</b></span></div></article>`).join('');
   const sf = set.safetyFunctions.map(f=>{
     const r = plr(f,t);
     let status;
@@ -1141,10 +1201,10 @@ function setTables(set, t, editable){
   }).join('');
   const covered = (set.covered||[]).map(o=>`<li>${esc(o.item)} <span class="src">Annex A No. ${(o.annexA||[]).join(', ')}</span>: ${esc(o.measure)}</li>`).join('');
   const oos = (set.outOfScope||[]).map(o=>`<li>${esc(o.item)}: ${esc(o.reason)}</li>`).join('');
-  return `<h3>Hazards</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>${L('Hazard and situation','Hazard와 상황')}</th><th>Annex A</th><th>${L('Clause','조항')}</th><th>Safety functions</th></tr></thead><tbody>${hz}</tbody></table></div>
-    <h3>${L('Safety functions and PLr','Safety function과 PLr')}</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Safety function</th><th>PLr</th><th>${L('Source','근거')}</th><th>Risk graph (ISO 13849-1 Annex A)</th><th>${L('Status','상태')}</th></tr></thead><tbody>${sf}</tbody></table></div>
+  return `<h3 class="set-h">Hazards</h3>
+    <div class="hz-list">${hz}</div>
+    <h3 class="set-h">${L('Safety functions and PLr','Safety function과 PLr')}</h3>
+    <div class="tbl-wrap"><table class="sf-t"><thead><tr><th>ID</th><th>Safety function</th><th>PLr</th><th>${L('Source','근거')}</th><th>Risk graph</th><th>${L('Status','상태')}</th></tr></thead><tbody>${sf}</tbody></table></div>
     ${covered||oos?`<div class="sheet">${covered?`<h3>${L('Covered by design, not by a safety function','Safety function이 아니라 설계로 대응하는 항목')}</h3><ul class="plain">${covered}</ul>`:''}${oos?`<h3>${L('Out of scope','범위 밖')}</h3><ul class="plain">${oos}</ul>`:''}</div>`:''}`;
 }
 function compareHtml(draft,t){
@@ -1709,16 +1769,18 @@ function setView(app, step, fromHistory){
 }
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
   const st = b.dataset.go;
-  if(st==='hazards' && !S.isExample){ S=exampleState(); changed(); }
+  if(st==='hazards' && !S.isExample) loadExample();
   if(inApp()){ show(st); window.scrollTo({top:0,behavior:'smooth'}); } else setView(true, st);
 });
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>setView(false));
+$('undoBtn').onclick=()=>{ if(prevS){ S = prevS; prevS = null; changed(); } $('undoToast').hidden = true; };
+$('undoClose').onclick=()=>{ $('undoToast').hidden = true; };
 addEventListener('popstate', ()=>{
   const h = (location.hash||'').slice(1);
   if(STEPS.includes(h)){ if(inApp()) show(h,true); else setView(true,h,true); }
   else if(inApp()) setView(false,null,true);
 });
-$('ctaExample').onclick=()=>{ if(!S.isExample){ S=exampleState(); changed(); } show('hazards'); document.querySelector('nav.steps').scrollIntoView({behavior:'smooth'}); };
+$('ctaExample').onclick=()=>{ if(!S.isExample) loadExample(); show('hazards'); document.querySelector('nav.steps').scrollIntoView({behavior:'smooth'}); };
 $('ctaStart').onclick=()=>{ show('describe'); document.querySelector('nav.steps').scrollIntoView({behavior:'smooth'}); setTimeout(()=>$('aiText')&&!$('aiBox').hidden&&$('aiText').focus(),300); };
 
 function changed(skipForm){ if(!skipForm) fillForm(); renderVerdict(); renderStandards(); renderHazards(); renderTrace(); renderReport(); simOnce(); save(); }
