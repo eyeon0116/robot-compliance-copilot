@@ -1,0 +1,1801 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Robot Compliance Copilot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a safety control-room console. Glass step bar over a faint blueprint grid; one working sheet per step, form left, live verdict right. */
+:root{
+  --bg:#0E0F11; --sheet:#15171A; --sheet-2:#1C1F23; --ink:#EEEBE5; --ink-2:#A39E94; --line:#26292E; --line-2:#363A41; --line-3:#4A4F57; --tint:#1C1F23;
+  --signal:#F2B33D; --signal-hi:#FFCB66; --signal-ink:#1A1204; --signal-tint:#272011; --spot:rgba(242,179,61,.06); --glow:rgba(242,179,61,.30);
+  --grid:rgba(230,210,170,.05); --glass:rgba(14,15,17,.8); --hover:#23262B;
+  --warn:#F28C5B; --warn-tint:#2E1B13; --ok:#6FD3A0; --ok-tint:#12251B;
+  --pl-a:#7D8A97; --pl-b:#B8954A; --pl-c:#E08A3A; --pl-d:#E5505E; --pl-e:#B23A55;
+  --f-display:"Archivo","IBM Plex Sans KR","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","IBM Plex Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono","IBM Plex Sans KR",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.sheet>*,section.step>*,.grid2>*{min-width:0}
+select{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sheet)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-stretch:85%;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.muted{color:var(--ink-2)}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* header */
+header.top{background:var(--sheet);border-bottom:1px solid var(--line)}
+
+.tagline{max-width:62ch;color:var(--ink-2)}
+.hero{padding-block:26px 22px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:center}
+@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero-main{display:grid;gap:10px}
+.lede{font-family:var(--f-display);font-stretch:85%;font-size:clamp(19px,2.4vw,24px);font-weight:600;line-height:1.25;max-width:34ch}
+.hero-card{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:16px 18px;display:grid;gap:6px}
+.hero-card b{font-family:var(--f-display);font-stretch:85%;font-size:20px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 4px}
+.hero-stats div{border-top:2px solid var(--ink);padding-top:6px}
+.hero-stats dt{font-size:11.5px;color:var(--ink-2);line-height:1.2}
+.hero-stats dd{margin:0;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums}
+@media (max-width:420px){.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.example-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;background:var(--bg)}
+.example-chip b{font-weight:600}
+
+/* step bar */
+nav.steps{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sheet);border-bottom:1px solid var(--line)}
+nav.steps .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:0}
+nav.steps button{flex:1 0 auto;display:flex;align-items:center;gap:10px;background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 11px;cursor:pointer;color:var(--ink-2);text-align:left;white-space:nowrap}
+nav.steps button .n{font-family:var(--f-mono);font-size:12px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line)}
+nav.steps button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--signal)}
+nav.steps button[aria-selected="true"] .n{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+nav.steps button .t{font-weight:600}
+
+main{padding-block:24px 56px}
+section.step{display:grid;gap:20px}
+.step-head{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.step-head p{max-width:70ch}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:16px;min-width:0}
+.sheet.sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px)}
+@media (max-width:860px){.sheet.sticky{position:static}}
+
+/* form */
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+@media (max-width:520px){.fields{grid-template-columns:minmax(0,1fr)}}
+.field{display:grid;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+label.lab{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+textarea{resize:vertical;min-height:88px}
+.unit{display:flex;align-items:center;gap:8px}
+.unit span{font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2)}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:8px;min-width:0}
+legend{font-size:13px;font-weight:600;padding:0;margin-bottom:6px}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;background:var(--bg)}
+.checks input{accent-color:var(--signal)}
+.ai-tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.04em;background:var(--signal-tint);color:var(--signal);border-radius:4px;padding:1px 6px;font-weight:500}
+
+.ai-box{border:1px dashed var(--signal);border-radius:8px;padding:14px;display:grid;gap:10px;background:var(--signal-tint)}
+.ai-box textarea{background:var(--sheet)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--sheet);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.btn.primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.btn:disabled{opacity:.55;cursor:default}
+.ai-status{font-size:13px;color:var(--ink-2)}
+.ai-notes{font-size:13px;background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+
+/* verdict */
+.type-badge{display:flex;gap:16px;align-items:center}
+.type-badge .big{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:54px;line-height:1;letter-spacing:-.02em;padding:6px 14px;border:2px solid var(--ink);border-radius:8px;min-width:118px;text-align:center}
+.type-badge .big.pending{color:var(--ink-2);border-color:var(--line);font-size:30px;padding:16px 14px}
+.crit{display:grid;gap:8px}
+.crit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;border-top:1px solid var(--line);padding-top:8px}
+.crit-row .why{grid-column:1/-1;font-size:12.5px;color:var(--ink-2)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--sheet);padding:4px 10px;font-size:12.5px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed="true"].yes{background:var(--ok-tint);color:var(--ok)}
+.seg button[aria-pressed="true"].no{background:var(--warn-tint);color:var(--warn)}
+.src{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2)}
+.seg.lang button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.hero-top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+:lang(ko) .lede{max-width:none;text-wrap:balance}
+:lang(ko) body,:lang(ko) .tagline{word-break:keep-all}
+.override{font-family:var(--f-mono);font-size:10.5px;color:var(--warn)}
+
+.review{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--signal);white-space:nowrap}
+.review::before{content:"!";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--signal);color:var(--signal-ink);font-family:var(--f-mono);font-size:11px}
+.reviewed{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ok);white-space:nowrap}
+.reviewed::before{content:"✓";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--ok);color:var(--sheet);font-size:10px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:500;background:var(--tint)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums}
+.pl{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:6px;color:#fff;font-family:var(--f-mono);font-weight:500;font-size:14px}
+.pl.a{background:var(--pl-a)}.pl.b{background:var(--pl-b)}.pl.c{background:var(--pl-c)}.pl.d{background:var(--pl-d)}.pl.e{background:var(--pl-e)}
+.pl.na{background:var(--tint);color:var(--ink-2);font-size:11px;width:auto;padding:0 6px}
+.role{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.role.legal{border-color:var(--ink);font-weight:500}
+.role.c{background:var(--signal-tint);border-color:var(--signal);color:var(--signal)}
+
+.tabs-mkt{display:flex;gap:6px}
+.notice{border-left:3px solid var(--warn);background:var(--warn-tint);padding:10px 14px;border-radius:0 6px 6px 0;font-size:13.5px}
+.coming{display:grid;gap:12px;place-items:start}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}
+.nowrap{white-space:nowrap}
+select.sfp{width:auto;padding:3px 4px;font-family:var(--f-mono);font-size:12px}
+.linkbtn{background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
+.flagnote{font-size:12px;color:var(--warn);margin-top:4px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
+.compare{border:1px solid var(--signal);border-radius:8px;padding:14px 16px;background:var(--signal-tint)}
+.cmp-nums{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:6px;font-size:14px}
+.cmp-nums b{font-family:var(--f-display);font-stretch:80%;font-size:26px;font-weight:800;margin-right:4px}
+.gap-sum{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.gap-sum>div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:12px 16px;display:grid;gap:2px;min-width:110px}
+.gap-sum .big-n{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.gap-sum .gap-meta{flex:1 1 240px}
+.roadmap{display:grid;gap:12px}
+.phase{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:8px}
+.phase-h{display:flex;gap:10px;align-items:baseline}
+.phase-h .mono{color:var(--ink-2)}
+ul.gap-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.gap-item{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px;flex-wrap:wrap}
+.gap-item label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;flex:1 1 280px;min-width:0}
+.gap-item label>span{display:grid;gap:2px}
+.gap-item input{margin-top:4px;accent-color:var(--signal)}
+.st{font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.st.miss{background:var(--warn-tint);color:var(--warn)}
+.st.draft{background:var(--signal-tint);color:var(--signal)}
+.st.have{background:var(--ok-tint);color:var(--ok)}
+.report-text{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px}
+footer{border-top:1px solid var(--line);padding-block:20px;font-size:12.5px;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){.sheet,.tbl-wrap{transition:border-color .15s}}
+
+/* ---------- console treatment ---------- */
+body{background:radial-gradient(1100px 520px at 78% -8%,rgba(242,179,61,.10),transparent 62%),var(--bg);background-attachment:fixed}
+body::before{background:var(--bg)}
+::selection{background:var(--signal);color:var(--signal-ink)}
+header.top{position:relative;overflow:hidden;background:transparent;border-bottom:1px solid var(--line)}
+header.top::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px;
+  -webkit-mask-image:radial-gradient(ellipse 85% 100% at 72% 0%,#000 25%,transparent 78%);mask-image:radial-gradient(ellipse 85% 100% at 72% 0%,#000 25%,transparent 78%)}
+header.top .wrap{position:relative}
+h1{letter-spacing:-.015em;background:linear-gradient(180deg,var(--ink) 35%,#CDBFA6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.std-strip{display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);letter-spacing:.02em}
+.std-strip span{display:inline-flex;align-items:center;gap:8px}
+.std-strip span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--glow)}
+.hero-card{background:linear-gradient(180deg,var(--sheet-2),var(--sheet));border-color:var(--line-2);overflow:hidden}
+.hero-card::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--signal),transparent);opacity:.7}
+.hero-stats div{border-top-color:var(--line-2);position:relative}
+.hero-stats div::after{content:"";position:absolute;left:0;top:-2px;height:2px;width:100%;background:var(--signal);transform-origin:left;transform:scaleX(.35)}
+.hero-stats dd{color:var(--ink)}
+
+nav.steps{background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border-bottom-color:var(--line)}
+nav.steps .wrap{position:relative}
+nav.steps button{border-bottom-color:transparent!important;transition:color .25s var(--ease)}
+nav.steps button:hover{color:var(--ink)}
+nav.steps button .n{transition:background .3s var(--ease),border-color .3s var(--ease),box-shadow .3s var(--ease)}
+nav.steps button[aria-selected="true"] .n{box-shadow:0 0 0 4px rgba(242,179,61,.14),0 0 14px var(--glow)}
+.tab-ind{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--signal);box-shadow:0 0 12px var(--glow);border-radius:2px;transition:transform .45s var(--ease),width .45s var(--ease);pointer-events:none}
+
+section.step{position:relative}
+section.step.enter>*{animation:panelIn .5s var(--ease) both}
+section.step.enter>*:nth-child(2){animation-delay:.05s}
+section.step.enter>*:nth-child(3){animation-delay:.1s}
+section.step.enter>*:nth-child(4){animation-delay:.15s}
+section.step.enter::before{content:"";position:absolute;left:0;right:0;top:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--signal) 50%,transparent);animation:scan .9s var(--ease) both;pointer-events:none}
+@keyframes panelIn{from{opacity:0;transform:translateY(12px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes scan{0%{transform:scaleX(0);opacity:0}35%{opacity:1}100%{transform:scaleX(1);opacity:0}}
+.hero-main>*,.hero-card{animation:panelIn .7s var(--ease) both}
+.hero-main>*:nth-child(2){animation-delay:.06s}.hero-main>*:nth-child(3){animation-delay:.12s}.hero-main>*:nth-child(4){animation-delay:.18s}.hero-main>*:nth-child(5){animation-delay:.24s}.hero-main>*:nth-child(6){animation-delay:.3s}
+.hero-card{animation-delay:.2s}
+.hero-stats div::after{animation:fillBar 1.1s .5s var(--ease) both}
+@keyframes fillBar{from{transform:scaleX(0)}to{transform:scaleX(.35)}}
+
+.sheet,.phase,.hero-card{position:relative}
+.sheet{border-color:var(--line);box-shadow:0 1px 0 rgba(255,255,255,.02) inset,0 20px 40px -28px rgba(0,0,0,.8);transition:border-color .3s var(--ease)}
+.sheet:hover,.phase:hover{border-color:var(--line-2)}
+.sheet::after,.phase::after,.hero-card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s var(--ease);
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),var(--spot),transparent 60%)}
+.sheet:hover::after,.phase:hover::after,.hero-card:hover::after{opacity:1}
+
+input[type=text],input[type=number],select,textarea{background:var(--bg);border-color:var(--line-2);transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+input[type=text]:hover,input[type=number]:hover,select:hover,textarea:hover{border-color:var(--line-3)}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:none;border-color:var(--signal);box-shadow:0 0 0 3px rgba(242,179,61,.18)}
+.checks label{background:var(--bg);border-color:var(--line-2);transition:border-color .2s var(--ease),background .2s var(--ease)}
+.checks label:hover{border-color:var(--line-3)}
+.checks label:has(input:checked){border-color:rgba(242,179,61,.55);background:var(--signal-tint)}
+.btn{background:var(--sheet-2);border-color:var(--line-2);transition:transform .15s var(--ease),box-shadow .25s var(--ease),border-color .25s var(--ease),background .25s var(--ease)}
+.btn:not(:disabled):hover{border-color:var(--line-3);background:var(--hover)}
+.btn:not(:disabled):active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(180deg,var(--signal-hi),var(--signal));border-color:var(--signal);color:var(--signal-ink)}
+.btn.primary:not(:disabled):hover{background:linear-gradient(180deg,#FFD585,var(--signal-hi));box-shadow:0 0 0 1px var(--signal),0 10px 28px -10px var(--glow)}
+.ai-box{border:1px solid rgba(242,179,61,.35);background:linear-gradient(180deg,var(--signal-tint),rgba(39,32,17,.35))}
+.ai-box textarea{background:var(--bg)}
+.ai-consent{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;cursor:pointer}
+.ai-consent input{appearance:none;width:38px;height:22px;border-radius:11px;background:var(--line-2);position:relative;cursor:pointer;margin-top:2px;transition:background .25s var(--ease)}
+.ai-consent input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--ink);transition:transform .25s var(--ease)}
+.ai-consent input:checked{background:var(--signal)}
+.ai-consent input:checked::after{transform:translateX(16px);background:var(--bg)}
+.ai-consent input:focus-visible{outline:2px solid var(--signal-hi);outline-offset:2px}
+.ai-consent small{display:block;color:var(--ink-2);font-size:12.5px;margin-top:4px}
+.local-badge{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.04em;color:var(--ok);border:1px solid rgba(111,211,160,.4);border-radius:4px;padding:1px 6px}
+#aiBox:not(.on) .ai-on{display:none}
+.ai-notes{background:var(--bg);border-color:var(--line-2)}
+
+.type-badge .big{border-color:var(--signal);box-shadow:0 0 0 1px rgba(242,179,61,.2) inset,0 0 28px -6px var(--glow);background:linear-gradient(180deg,var(--signal-tint),transparent)}
+.type-badge .big.pending{box-shadow:none;background:none}
+.type-badge .big.flash{animation:typeIn .7s var(--ease)}
+@keyframes typeIn{0%{transform:scale(.94);filter:blur(4px);opacity:.3}60%{box-shadow:0 0 0 6px rgba(242,179,61,.18),0 0 40px -4px var(--glow)}100%{transform:none;filter:none;opacity:1}}
+.seg{border-color:var(--line-2)}
+.seg button{background:var(--bg);color:var(--ink-2);transition:background .2s var(--ease),color .2s var(--ease)}
+.seg button:hover{color:var(--ink)}
+.seg.lang button[aria-pressed="true"]{background:var(--signal);color:var(--signal-ink)}
+.crit-row{border-top-color:var(--line)}
+
+.tbl-wrap{background:var(--sheet);border-color:var(--line)}
+th{background:var(--sheet-2);color:var(--ink-2)}
+td{border-bottom-color:var(--line)}
+tbody tr{transition:background .2s var(--ease)}
+tbody tr:hover{background:rgba(242,179,61,.04)}
+.pl{box-shadow:0 0 14px -4px currentColor;color:#fff}
+.pl.d{box-shadow:0 0 16px -4px var(--pl-d)}.pl.e{box-shadow:0 0 16px -4px var(--pl-e)}.pl.c{box-shadow:0 0 16px -4px var(--pl-c)}
+.pl.na{box-shadow:none}
+.role{border-color:var(--line-2)}
+.notice{background:var(--warn-tint)}
+.compare{background:linear-gradient(180deg,var(--signal-tint),var(--sheet));border-color:rgba(242,179,61,.45)}
+.gap-sum>div{background:var(--sheet);border-color:var(--line)}
+.gap-sum .big-n{color:var(--ink)}
+.phase{background:var(--sheet);border-color:var(--line);transition:border-color .3s var(--ease)}
+.gap-item{border-top-color:var(--line)}
+footer{border-top-color:var(--line)}
+
+/* ---------- landing ---------- */
+.landing{position:relative;min-height:100vh;min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;isolation:isolate;border-bottom:1px solid var(--line)}
+.land-cv{position:absolute;inset:0;width:100%;height:100%;z-index:-2;display:block}
+.landing::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(900px 640px at 74% 46%,rgba(242,179,61,.09),transparent 62%),linear-gradient(180deg,transparent 55%,var(--bg))}
+.landing>.wrap{width:100%}
+.land-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:20px}
+.brand{display:flex;gap:10px;align-items:center;font-family:var(--f-display);font-weight:700;font-stretch:85%;font-size:16px;white-space:nowrap}
+.brand-mark{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--signal);box-shadow:0 0 12px var(--glow);position:relative;flex:none}
+.brand-mark::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--signal)}
+.land-main{align-self:center;display:grid;gap:26px;padding-block:28px 40px;transform:translateY(calc(var(--p,0) * -80px));opacity:calc(1 - var(--p,0) * 1.2)}
+.land-eyebrow{color:var(--signal)}
+h1.land-h{font-weight:800;font-stretch:76%;font-size:clamp(40px,9vw,124px);line-height:.92;letter-spacing:-.028em;max-width:13ch;text-wrap:balance;
+  background:linear-gradient(180deg,#FFFFFF 10%,#D9CDB8 95%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:rise 1s var(--ease) both}
+:lang(ko) h1.land-h{font-size:clamp(36px,7.4vw,104px);line-height:1.08;letter-spacing:-.035em;max-width:none}
+h1.land-h em{font-style:normal;background:linear-gradient(90deg,var(--signal-hi),var(--signal) 60%,#E9893A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.land-sub{max-width:54ch;font-size:clamp(16px,1.5vw,19px);color:var(--ink-2);animation:rise 1s .15s var(--ease) both}
+.land-main .row{animation:rise 1s .28s var(--ease) both}
+.land-main .eyebrow{animation:rise 1s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(28px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+.btn.lg{padding:14px 24px;font-size:16px;border-radius:999px}
+.btn.sm{padding:7px 14px;font-size:13px;border-radius:999px}
+.btn.ghost{background:rgba(255,255,255,.02);border-color:var(--line-3);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.land-foot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:20px;align-items:end;padding-block:22px 30px;border-top:1px solid var(--line)}
+.land-stat{display:grid;gap:4px;min-width:0}
+.land-stat b{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:clamp(28px,3.2vw,44px);line-height:1;font-variant-numeric:tabular-nums}
+.land-stat span{font-size:13px;color:var(--ink-2);max-width:28ch}
+.land-stat:first-child b{color:var(--signal)}
+.scroll-hint{display:grid;justify-items:center;gap:8px;background:none;border:0;color:var(--ink-2);font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.scroll-hint::after{content:"";width:1px;height:38px;background:linear-gradient(var(--signal),transparent);animation:drip 1.8s var(--ease) infinite;transform-origin:top}
+@keyframes drip{0%{transform:scaleY(0);opacity:1}70%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+@media (max-width:760px){.land-foot{grid-template-columns:repeat(2,minmax(0,1fr))}.land-foot .land-stat:nth-child(3){grid-column:1/-1}.scroll-hint{display:none}}
+.nav-why{font-size:13.5px;color:var(--ink-2);text-decoration:none;margin-right:6px}.nav-why:hover{color:var(--ink)}
+@media (max-width:520px){.land-nav .btn.sm,.nav-why{display:none}}
+.ws-title{font-size:clamp(24px,3vw,32px);font-weight:800}
+
+/* ---------- safety field simulator ---------- */
+.sim-grid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:stretch}
+@media (max-width:860px){.sim-grid{grid-template-columns:minmax(0,1fr)}}
+.sim-cv{width:100%;height:320px;display:block;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+@media (max-width:520px){.sim-cv{height:260px}}
+.sim-read{display:grid;gap:12px;align-content:start}
+.sim-state{font-weight:600;font-size:13.5px;border-radius:8px;padding:10px 12px;border:1px solid var(--line-2);background:var(--bg);display:flex;gap:8px;align-items:center}
+.sim-state::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;flex:none}
+.sim-state.ok{color:var(--ok)}.sim-state.sig{color:var(--signal)}.sim-state.red{color:var(--pl-d)}.sim-state.warn{color:var(--warn)}
+.sim-kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}
+.sim-kv div{border-top:1px solid var(--line-2);padding-top:6px;min-width:0}
+.sim-kv dt{font-size:11.5px;color:var(--ink-2)}
+.sim-kv dd{margin:0;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums}
+.sim-kv .wide{grid-column:1/-1}
+.sim-kv .wide dd{font-family:var(--f-body);font-size:13px}
+.sim-sl{display:grid;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.sim-sl span{display:flex;justify-content:space-between}
+.sim-sl b{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--signal)}
+.btn[aria-pressed="true"]{border-color:var(--signal);color:var(--signal);background:var(--signal-tint)}
+
+/* ---------- traceability ---------- */
+.tr-sum{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.tr-sum>div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:12px 16px;display:grid;gap:2px;min-width:110px}
+.tr-sum .big-n{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.tr-sum .tr-cov{flex:1 1 240px;align-content:center;font-weight:600}
+.tr-cov.good{color:var(--ok)}.tr-cov.bad{color:var(--pl-d)}
+.tr-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:radial-gradient(700px 300px at 50% 0%,rgba(242,179,61,.05),transparent 70%),var(--sheet)}
+.tr-map{position:relative;min-width:900px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:80px;padding:18px}
+.tr-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.tr-svg path{fill:none;stroke:var(--line-3);stroke-width:1.2;opacity:.7;transition:opacity .25s var(--ease),stroke .25s var(--ease)}
+.tr-map.focus .tr-svg path{opacity:.1}
+.tr-map.focus .tr-svg path.on{opacity:1;stroke:var(--signal);stroke-width:1.7;stroke-dasharray:6 5;animation:flow .9s linear infinite;filter:drop-shadow(0 0 4px rgba(242,179,61,.6))}
+@keyframes flow{to{stroke-dashoffset:-11}}
+.tr-col{display:grid;gap:8px;align-content:start;position:relative;z-index:1;min-width:0}
+.tr-node{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;cursor:pointer;font-size:13px;line-height:1.3;transition:opacity .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease),background .25s var(--ease)}
+.tr-node.std{grid-template-columns:minmax(0,1fr) auto}
+.tr-node .mono{color:var(--ink-2)}
+.tr-t{min-width:0}
+.tr-t.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tr-node.std .tr-t{display:grid;gap:1px}
+.tr-node.std .tr-t .muted{font-size:11.5px}
+.tr-map.focus .tr-node{opacity:.32}
+.tr-map.focus .tr-node.on{opacity:1;border-color:var(--signal);box-shadow:0 0 18px -6px var(--glow)}
+.tr-node[aria-pressed="true"]{background:var(--signal-tint);border-color:var(--signal)}
+.tr-node.unc{border-color:var(--pl-d)}
+.tr-node .pl{width:24px;height:24px;font-size:12.5px}
+.tr-detail{gap:8px}
+.tr-detail .chips{display:flex;flex-wrap:wrap;gap:6px}
+.tr-detail .chips .role{white-space:normal;max-width:100%}
+
+/* ---------- why section ---------- */
+.why{border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--bg),#0B0C0E)}
+.why .wrap{padding-block:88px 96px;display:grid;gap:64px}
+.why-head{display:grid;gap:16px;max-width:900px}
+.why-head h2{font-size:clamp(32px,5vw,64px);font-weight:800;font-stretch:78%;line-height:1.02;letter-spacing:-.02em;text-wrap:balance}
+:lang(ko) .why-head h2{letter-spacing:-.03em;line-height:1.15}
+.why-head h2 em{font-style:normal;color:var(--signal)}
+.why-head p{font-size:clamp(16px,1.5vw,18px);color:var(--ink-2);max-width:62ch}
+.why-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.why-facts>div{background:var(--sheet);padding:22px 24px;display:grid;gap:6px;align-content:start}
+.why-facts b{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:clamp(34px,4vw,52px);line-height:1;font-variant-numeric:tabular-nums}
+.why-facts b.sig{color:var(--signal)}
+.why-facts span{color:var(--ink-2);font-size:14px}
+.why-facts small{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);opacity:.8}
+.why-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.why-card{position:relative;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:10px;align-content:start;transition:border-color .3s var(--ease),transform .3s var(--ease)}
+.why-card:hover{border-color:var(--line-3);transform:translateY(-2px)}
+.why-card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s var(--ease);background:radial-gradient(380px circle at var(--mx,50%) var(--my,0%),var(--spot),transparent 60%)}
+.why-card:hover::after{opacity:1}
+.why-card .ix{font-family:var(--f-mono);font-size:11px;color:var(--signal);letter-spacing:.1em}
+.why-card h3{font-size:19px}
+.why-card p{color:var(--ink-2);font-size:14px}
+.why-cmp{display:grid;gap:14px}
+.why-cmp h3{font-size:22px}
+.why-note{font-size:12.5px;color:var(--ink-2);max-width:80ch}
+@media (max-width:900px){.why-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.why-facts{grid-template-columns:1fr}}
+.cmp-t{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cmp-t th{font-size:11px}
+.cmp-t th:last-child{color:var(--signal)}
+.cmp-t td{background:var(--sheet)}
+.cmp-t td:first-child{color:var(--ink-2);width:24%}
+.cmp-t td:nth-child(2){color:var(--ink-2)}
+.cmp-t td:last-child{font-weight:600;color:var(--ink)}
+.why-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;counter-reset:f}
+.why-flow button{display:grid;gap:6px;text-align:left;background:var(--bg);border:1px solid var(--line-2);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .25s var(--ease),background .25s var(--ease)}
+.why-flow button:hover{border-color:var(--signal);background:var(--signal-tint)}
+.why-flow .n{font-family:var(--f-mono);font-size:11px;color:var(--signal)}
+.why-flow b{font-size:15px}
+.why-flow span:last-child{font-size:12.5px;color:var(--ink-2)}
+.why-cta{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between;border:1px solid var(--line-2);border-radius:14px;padding:28px;background:radial-gradient(600px 220px at 85% 50%,rgba(242,179,61,.12),transparent 70%),var(--sheet)}
+.why-cta h3{font-size:clamp(20px,2.4vw,28px);max-width:30ch}
+@media (max-width:900px){.why-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.why-flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.why-cards,.why-facts{grid-template-columns:minmax(0,1fr)}.why .wrap{padding-block:64px;gap:44px}.cmp-t td:first-child{width:auto}}
+
+/* ---------- how / standards / final ---------- */
+.sec{border-bottom:1px solid var(--line)}
+.sec>.wrap{padding-block:88px 96px;display:grid;gap:48px}
+.sec-head{display:grid;gap:14px;max-width:820px}
+.sec-head h2{font-size:clamp(30px,4.4vw,56px);font-weight:800;font-stretch:78%;line-height:1.04;letter-spacing:-.02em;text-wrap:balance}
+:lang(ko) .sec-head h2{letter-spacing:-.03em;line-height:1.15}
+.sec-head h2 em{font-style:normal;color:var(--signal)}
+.sec-head p{color:var(--ink-2);font-size:clamp(15px,1.4vw,17px);max-width:60ch}
+.how-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:40px;align-items:center}
+@media (max-width:900px){.how-grid{grid-template-columns:minmax(0,1fr)}}
+.steps3{display:grid;gap:0;counter-reset:s}
+.steps3 li{list-style:none;display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;padding:22px 0;border-top:1px solid var(--line)}
+.steps3 li:last-child{border-bottom:1px solid var(--line)}
+.steps3 .rn{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:30px;color:var(--signal);line-height:1}
+.steps3 h3{font-size:19px;margin-bottom:4px}
+.steps3 p{color:var(--ink-2);font-size:14px}
+ol.steps3{margin:0;padding:0}
+.code{border:1px solid var(--line-2);border-radius:12px;background:#0B0C0E;overflow:hidden;box-shadow:0 30px 60px -30px rgba(0,0,0,.9),0 0 0 1px rgba(242,179,61,.05)}
+.code-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--sheet)}
+.code-bar .dots{display:flex;gap:6px}.code-bar .dots i{width:10px;height:10px;border-radius:50%;background:var(--line-3)}
+.code-bar .fn{font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.ready{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11px;color:var(--ok);border:1px solid rgba(111,211,160,.35);border-radius:999px;padding:2px 9px}
+.ready::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.code pre{margin:0;padding:18px 20px;font-family:var(--f-mono);font-size:12.5px;line-height:1.75;color:var(--ink);overflow-x:auto;white-space:pre}
+.code .c{color:#6E727A}.code .k{color:var(--signal)}.code .v{color:#E9DFC9}.code .o{color:var(--ok)}.code .r{color:var(--pl-d)}
+.code .cur{display:inline-block;width:7px;height:14px;background:var(--signal);vertical-align:-2px;animation:pulse 1s steps(1) infinite}
+.marq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);display:grid;gap:12px}
+.marq-row{display:flex;gap:12px;width:max-content;animation:marq 48s linear infinite}
+.marq-row.rev{animation-direction:reverse;animation-duration:56s}
+.marq:hover .marq-row{animation-play-state:paused}
+@keyframes marq{to{transform:translateX(-50%)}}
+.mchip{display:grid;gap:2px;background:var(--sheet);border:1px solid var(--line-2);border-radius:10px;padding:12px 16px;min-width:200px}
+.mchip b{font-size:14px}.mchip span{font-size:12px;color:var(--ink-2)}.mchip .role{justify-self:start;margin-top:4px}
+.trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.trust{grid-template-columns:minmax(0,1fr)}.sec>.wrap{padding-block:64px;gap:36px}}
+.trust .why-card h3{font-size:17px}
+.final{position:relative;overflow:hidden;text-align:center;border-bottom:1px solid var(--line);background:radial-gradient(800px 360px at 50% 100%,rgba(242,179,61,.14),transparent 70%),var(--bg)}
+.final .wrap{padding-block:110px;display:grid;gap:22px;justify-items:center}
+.final h2{font-size:clamp(34px,5.6vw,76px);font-weight:800;font-stretch:76%;line-height:1;letter-spacing:-.025em;text-wrap:balance;max-width:16ch}
+:lang(ko) .final h2{letter-spacing:-.035em;line-height:1.15}
+.final p{color:var(--ink-2)}
+.final .row{justify-content:center}
+.land-links{display:flex;gap:22px}
+.land-links button{background:none;border:0;color:var(--ink-2);font-size:14px;cursor:pointer;padding:4px 0}
+.land-links button:hover{color:var(--ink)}
+@media (max-width:860px){.land-links{display:none}}
+footer.site{border-top:1px solid var(--line);padding-block:48px 28px;font-size:13px;color:var(--ink-2)}
+footer.site .wrap{display:grid;gap:32px}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr));gap:28px}
+@media (max-width:700px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+.ft-grid h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:0 0 10px;font-weight:500}
+.ft-grid ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ft-grid button{background:none;border:0;padding:0;color:var(--ink-2);cursor:pointer;font-size:13px;text-align:left}
+.ft-grid button:hover{color:var(--ink)}
+.ft-bot{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;border-top:1px solid var(--line);padding-top:18px;font-size:12px}
+
+/* ---------- two views: site and workspace ---------- */
+.appbar{border-bottom:1px solid var(--line);background:var(--bg)}
+.appbar-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px}
+.brand-btn{background:none;border:0;color:var(--ink);cursor:pointer;padding:0}
+.brand-btn:hover .brand-mark{box-shadow:0 0 18px var(--glow)}
+.appbar .crumb{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);border-left:1px solid var(--line-2);padding-left:12px;margin-left:2px}
+@media (max-width:520px){.appbar .crumb,.appbar .brand-txt{display:none}}
+.warp{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:0;background:radial-gradient(900px 400px at 50% 50%,rgba(242,179,61,.08),transparent 70%)}
+.warp::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:linear-gradient(90deg,transparent,var(--signal),transparent);box-shadow:0 0 24px var(--glow);transform:scaleX(0)}
+.warp.go{animation:warpFade .8s var(--ease)}
+.warp.go::before{animation:warpLine .8s var(--ease)}
+@keyframes warpFade{0%,100%{opacity:0}25%,55%{opacity:1}}
+@keyframes warpLine{from{transform:scaleX(0)}60%{transform:scaleX(1)}to{transform:scaleX(1);opacity:0}}
+.view-in{animation:viewIn .6s var(--ease) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px) scale(.99);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+::view-transition-old(root){animation:vtOut .35s var(--ease) both}
+::view-transition-new(root){animation:vtIn .6s .1s var(--ease) both}
+@keyframes vtOut{to{opacity:0;filter:blur(10px);transform:scale(1.015)}}
+@keyframes vtIn{from{opacity:0;filter:blur(10px);transform:scale(.985)}}
+@media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
+
+/* ---------- report document (rendered off screen for PDF) ---------- */
+.pdf-host{position:fixed;left:-12000px;top:0;width:794px;pointer-events:none}
+.pdf-page{width:794px;height:1123px;background:#FFFFFF;color:#1A1D21;font-family:"IBM Plex Sans","IBM Plex Sans KR",system-ui,sans-serif;font-size:11px;line-height:1.5;padding:40px 52px 30px;display:flex;flex-direction:column;box-sizing:border-box;word-break:keep-all}
+.pdf-hd,.pdf-ft{display:flex;justify-content:space-between;gap:16px;font-family:"IBM Plex Mono","IBM Plex Sans KR",monospace;font-size:8.5px;color:#6B6F76;letter-spacing:.05em}
+.pdf-hd{border-bottom:1px solid #E3DED4;padding-bottom:8px;text-transform:uppercase}
+.pdf-ft{border-top:1px solid #E3DED4;padding-top:8px}
+.pdf-body{flex:1 1 auto;min-height:0;overflow:hidden;padding-top:18px;display:block}
+.pdf-body>*{margin:0 0 12px}
+.pdf-cover{border-left:4px solid #E0A126;padding:4px 0 4px 16px;margin-bottom:18px!important}
+.pdf-cover .k{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9A6A08}
+.pdf-cover h1{font-family:"Archivo","IBM Plex Sans KR",sans-serif;font-stretch:85%;font-size:28px;font-weight:800;line-height:1.1;margin:4px 0;color:#1A1D21;background:none;-webkit-text-fill-color:#1A1D21}
+.pdf-cover .nm{font-size:16px;font-weight:600}
+.pdf-cover .meta{color:#6B6F76;font-size:10px;margin-top:4px}
+.pdf-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pdf-badges span{border:1px solid #D9D2C4;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:600}
+.pdf-badges .draft{background:#FFF4DC;border-color:#E0A126;color:#7A5200}
+.pdf-sec h2{font-family:"Archivo","IBM Plex Sans KR",sans-serif;font-stretch:85%;font-size:14.5px;font-weight:700;color:#1A1D21;margin:6px 0 8px}
+.pdf-t{width:100%;border-collapse:collapse;font-size:9.8px;table-layout:auto}
+.pdf-t th{background:#F3EEE4;color:#5A5E66;font-family:"IBM Plex Mono","IBM Plex Sans KR",monospace;font-size:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:6px 7px;border-bottom:1px solid #D9D2C4}
+.pdf-t td{padding:6px 7px;border-bottom:1px solid #ECE7DE;vertical-align:top;color:#1A1D21}
+.pdf-t td.m{font-family:"IBM Plex Mono","IBM Plex Sans KR",monospace;font-size:9px;color:#4A4E55}
+.pdf-t td .s{display:block;color:#6B6F76;font-size:9px}
+.pdf-pl{display:inline-block;min-width:18px;text-align:center;border-radius:4px;color:#fff;font-family:"IBM Plex Mono",monospace;font-weight:500;padding:1px 5px}
+.pdf-pl.a{background:#7D8A97}.pdf-pl.b{background:#A07A2C}.pdf-pl.c{background:#C26A12}.pdf-pl.d{background:#B3202E}.pdf-pl.e{background:#6E0F1B}.pdf-pl.x{background:#9AA0A6}
+.pdf-st{font-weight:600;white-space:nowrap}.pdf-st.have{color:#1C6B47}.pdf-st.draft{color:#9A6A08}.pdf-st.miss{color:#B3202E}
+.pdf-note{font-size:9.5px;color:#6B6F76;border-top:1px solid #E3DED4;padding-top:8px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .land-main{transform:none;opacity:1}
+}
+</style>
+
+<div class="warp" id="warp" aria-hidden="true"></div>
+<div id="siteView">
+<section class="landing" id="landing" aria-label="Robot Compliance Copilot">
+  <canvas class="land-cv" id="landCv" aria-hidden="true"></canvas>
+  <div class="wrap land-nav">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Robot Compliance Copilot</div>
+    <nav class="land-links" aria-label="Sections"><button type="button" data-to="why" data-ko="왜 필요한가">Why</button><button type="button" data-to="how" data-ko="사용 방법">How it works</button><button type="button" data-to="stds" data-ko="규격">Standards</button><button type="button" data-go="describe" data-ko="워크스페이스">Workspace</button></nav>
+    <div class="row"><div class="seg lang" role="group" aria-label="Language"><button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="ko" lang="ko">한국어</button></div><button class="btn primary sm" type="button" data-go="describe" data-ko="시작하기">Get started</button></div>
+  </div>
+  <div class="wrap land-main">
+    <div class="eyebrow land-eyebrow">ISO 13482 · ISO 13849-1 · EU Machinery Regulation</div>
+    <h1 class="land-h" data-ko="로봇 회사의&lt;br&gt;&lt;em&gt;사내 안전팀&lt;/em&gt;,&lt;br&gt;AI가 대신합니다.">The safety team<br>your robot company<br><em>doesn&rsquo;t have yet.</em></h1>
+    <p class="land-sub" data-ko="Robot type 분류부터 적용 규격, hazard, safety function별 PLr, gap report까지. 기능안전 엔지니어의 방식으로 몇 분 만에 초안을 만들고, 검토와 최종 서명은 엔지니어가 합니다.">Robot type, every applicable standard, hazards, safety functions with PLr and a gap report, drafted in minutes on a functional-safety engineer&rsquo;s method. Your engineer reviews and signs off.</p>
+    <div class="row"><button class="btn primary lg" type="button" data-go="describe" data-ko="시작하기 →">Get started →</button><button class="btn ghost lg" type="button" data-go="hazards" data-ko="검수된 예시 보기">See the reviewed example</button></div>
+  </div>
+  <div class="wrap land-foot">
+    <div class="land-stat"><b id="dday">D-95</b><span data-ko="EU Machinery Regulation 적용까지 (2027년 1월 20일)">until the EU Machinery Regulation applies (20 January 2027)</span></div>
+    <div class="land-stat"><b id="stdCount">12</b><span data-ko="로봇에 맞춰 자동으로 매핑한 functional safety 규격">functional-safety standards mapped to the robot automatically</span></div>
+    <div class="land-stat"><b>&lt;1 min</b><span data-ko="Claude가 hazard, safety function, PLr 초안을 만드는 데 걸린 시간">for Claude to draft the hazards, safety functions and PLr</span></div>
+    <button class="scroll-hint" type="button" data-why="1" data-ko="스크롤">Scroll</button>
+  </div>
+</section>
+
+<section class="why" id="why" aria-labelledby="whyTitle">
+  <div class="wrap">
+    <div class="why-head">
+      <div class="eyebrow land-eyebrow" data-ko="왜 필요한가">Why it matters</div>
+      <h2 id="whyTitle" data-ko="안전 문서 첫 초안,&lt;br&gt;&lt;em&gt;1억 원 대신 1분.&lt;/em&gt;">The first safety draft.<br><em>A minute, not ₩100M.</em></h2>
+      <p data-ko="로봇을 팔려면 안전 문서가 필요하고, 작은 회사는 보통 대행사에 맡깁니다. 그 비용의 큰 부분이 첫 정리 작업입니다. 그 첫 단계를 사내에서 끝내고, 돈은 꼭 필요한 검토에만 쓰세요.">To sell a robot you need safety paperwork, and small makers usually hand it to an agency. Much of that bill is the first pass. Do that pass in-house and spend money only on the review that needs an expert.</p>
+    </div>
+    <div class="why-facts">
+      <div><b data-ko="~1억">~₩100M</b><span data-ko="로봇 모델 하나의 안전 문서를 대행사에 맡길 때 드는 돈">what an agency typically charges to prepare the safety paperwork for one robot model</span><small data-ko="업계 추정치, 대행사마다 다름">Industry estimate, varies by agency</small></div>
+      <div><b>65.1%</b><span data-ko="국내 로봇 기업 중 연 매출 10억 원 미만인 곳. 대행 한 건이 매출의 10% 이상일 수 있습니다">of Korean robot companies earn under ₩1B a year, so one agency contract can eat 10% or more of revenue</span><small data-ko="ZDNet Korea 2025-12-29 · 10%는 추정 계산">ZDNet Korea, 29 Dec 2025 · 10% is our estimate</small></div>
+      <div><b class="sig" id="dday2">D-95</b><span data-ko="이날부터 EU에 파는 로봇은 새 Machinery Regulation 2023/1230을 따라야 합니다">until robots sold into the EU must follow the new Machinery Regulation 2023/1230</span><small data-ko="2027년 1월 20일">20 January 2027</small></div>
+      <div><b>&lt;1 min</b><span data-ko="hazard, safety function, PLr 첫 초안이 나오는 시간">for the first draft of hazards, safety functions and PLr</span><small data-ko="CS-1 예시로 측정">Measured on the CS-1 example</small></div>
+    </div>
+    <div class="why-cards">
+      <div class="why-card"><span class="ix">01</span><h3 data-ko="규격을 몰라도 됩니다">No standards degree needed</h3><p data-ko="12개 규정·규격 중 뭐가 해당되는지 몰라도 됩니다. 고객에게 설명하듯 로봇을 적으면, 해당 규격과 그 이유가 정리돼서 나옵니다.">You don’t need to know which of the 12 regulations and standards apply. Describe the robot like you would to a customer, and the list comes back with the reason for each.</p></div>
+      <div class="why-card"><span class="ix">02</span><h3 data-ko="대행사 부르기 전에 숙제 끝내기">Do the homework before you pay</h3><p data-ko="대행 비용의 큰 부분은 hazard와 규격을 처음 정리하는 일입니다. 그걸 끝내고 가면 빈 종이가 아니라 검토에만 돈을 쓰게 됩니다.">Most of an agency bill goes on the first pass: listing hazards and standards. Walk in with that already done and you pay for review, not for a blank page.</p></div>
+      <div class="why-card"><span class="ix">03</span><h3 data-ko="출시까지 남은 일이 한눈에">See what’s left before launch</h3><p data-ko="Gap report가 남은 일을 해야 할 순서대로 보여줍니다. 심사 때 알게 되는 대신, 지금 사람과 예산을 계획할 수 있습니다.">The gap report lists every open item in the order to tackle it, so you can plan people and budget now instead of finding out at the assessment.</p></div>
+      <div class="why-card"><span class="ix">04</span><h3 data-ko="엔지니어 한 명이면 됩니다">One engineer is enough</h3><p data-ko="따로 안전팀을 만들 필요가 없습니다. 지금 있는 엔지니어가 초안을 검토하고 확정하면 되고, 정리와 계산은 도구가 합니다.">No dedicated safety team required. Your existing engineer reviews the draft and signs off; the tool does the listing and the arithmetic.</p></div>
+      <div class="why-card"><span class="ix">05</span><h3 data-ko="근거 있는 숫자">Numbers you can defend</h3><p data-ko="필요한 안전 등급(PLr)은 AI가 짐작하지 않고 ISO 13482, ISO 13849-1 규칙대로 계산합니다. 모든 줄에 근거 조항이 붙습니다.">Required safety levels (PLr) are calculated by the rules in ISO 13482 and ISO 13849-1, not guessed by AI, and every line points to its clause.</p></div>
+      <div class="why-card"><span class="ix">06</span><h3 data-ko="Word·PDF로 바로">Word and PDF on the spot</h3><p data-ko="보고서를 내려받아 그날 바로 컨설턴트, 투자자, 시험기관에 보낼 수 있습니다.">Download the report and send it to your consultant, investor or test lab the same day.</p></div>
+    </div>
+    <div class="why-cmp">
+      <h3 data-ko="대행사에 처음부터 맡길 때와 비교">Compared with handing it all to an agency</h3>
+      <div class="tbl-wrap" style="border:0;background:none"><table class="cmp-t">
+        <thead><tr><th></th><th data-ko="대행사에 처음부터">Agency from scratch</th><th>Robot Compliance Copilot</th></tr></thead>
+        <tbody>
+          <tr><td data-ko="첫 초안 비용">Cost of the first draft</td><td data-ko="약 1억 원 대행 계약의 일부 (추정)">Part of a ~₩100M agency contract (estimate)</td><td data-ko="누구를 부르기 전에 사내에서 끝남">Done in-house before you call anyone</td></tr>
+          <tr><td data-ko="첫 초안까지">Time to a first draft</td><td data-ko="최소 4주 (실무 추정)">4 weeks or more (practitioner estimate)</td><td data-ko="1분 이내">Under a minute</td></tr>
+          <tr><td data-ko="필요한 사람">People you need</td><td data-ko="사내 또는 외부 안전 전문가">A safety specialist, in-house or hired</td><td data-ko="지금 있는 엔지니어 한 명">The engineer you already have</td></tr>
+          <tr><td data-ko="규격 공부">Studying standards</td><td data-ko="먼저 사서 읽어야 함">Buy and read them first</td><td data-ko="해당 규격과 조항을 정리해 줌">Applicable ones listed for you, with clauses</td></tr>
+          <tr><td data-ko="받는 것">What you get</td><td data-ko="계약이 끝나야 받는 문서">Documents when the contract ends</td><td data-ko="오늘 바로 받는 Word·PDF gap report">Word and PDF gap report today</td></tr>
+        </tbody>
+      </table></div>
+      <p class="why-note" data-ko="₩1억은 업계 추정치이며 대행사와 로봇에 따라 다릅니다. 이 도구는 첫 초안을 만들 뿐 인증을 보장하지 않으며, 최종 판단은 엔지니어가 합니다.">₩100M is an industry estimate and varies by agency and robot. This tool makes a first draft; it does not guarantee certification, and your engineer makes the final call.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="how" aria-labelledby="howTitle">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow land-eyebrow" data-ko="사용 방법">How it works</div>
+      <h2 id="howTitle" data-ko="세 단계면&lt;br&gt;&lt;em&gt;첫 safety case&lt;/em&gt;가 나옵니다.">Three steps to<br>your <em>first safety case.</em></h2>
+    </div>
+    <div class="how-grid">
+      <ol class="steps3">
+        <li><span class="rn">I</span><div><h3 data-ko="로봇을 설명하세요">Describe the robot</h3><p data-ko="높이, 무게, 속도, 센서, 사용 환경을 직접 입력하세요. 원하면 Claude 초안 기능을 켜고, 평소 쓰는 말로 적은 설명으로 입력란을 채울 수도 있습니다.">Enter height, mass, speed, sensors and environment. Or turn on Claude drafting and let it fill the form from a plain-words description.</p></div></li>
+        <li><span class="rn">II</span><div><h3 data-ko="초안을 검토하세요">Review the draft</h3><p data-ko="Robot type, 적용 규격, hazard, safety function, PLr이 근거 조항과 함께 나옵니다. 엔지니어는 S, F, P와 판단만 고치면 됩니다.">Robot type, standards, hazards, safety functions and PLr arrive with their clauses. Your engineer adjusts S, F, P and the judgment calls.</p></div></li>
+        <li><span class="rn">III</span><div><h3 data-ko="그대로 넘기세요">Hand it over</h3><p data-ko="Traceability 맵으로 빠진 곳을 확인하고, gap report를 Word나 PDF로 받아 다음 단계로 넘기세요.">Check the traceability map for gaps, then download the gap report as Word or PDF for the next step.</p></div></li>
+      </ol>
+      <div class="code" aria-label="CS-1 example result">
+        <div class="code-bar"><span class="dots"><i></i><i></i><i></i></span><span class="fn">cs-1.robot</span><span class="ready">ready</span></div>
+<pre><span class="c">// CS-1 Concierge Robot (fictional example)</span>
+<span class="k">height</span>   <span class="v">1300 mm</span>    <span class="k">mass</span>  <span class="v">70 kg</span>    <span class="k">speed</span>  <span class="v">1.0 m/s</span>
+<span class="k">users</span>    <span class="v">public, children, elderly</span>
+<span class="k">sensing</span>  <span class="v">safety laser scanner, bumper, cliff</span>
+
+<span class="o">→</span> ISO 13482 <span class="k">Type 1.2</span>              <span class="c">6.1.2.1</span>
+<span class="o">→</span> <span class="v" id="codeStd">12</span> standards mapped               <span class="c">EU</span>
+<span class="o">→</span> 6 hazards · 7 safety functions      <span class="c">Annex A</span>
+<span class="o">→</span> PLr <span class="r">d</span> × 7                         <span class="c">Table 1</span>
+<span class="o">→</span> gap report <span class="o">.docx .pdf</span> <span class="cur"></span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="stds" aria-labelledby="stdTitle">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow land-eyebrow" data-ko="규격">Standards</div>
+      <h2 id="stdTitle" data-ko="필요한 규격은&lt;br&gt;&lt;em&gt;알아서 정리됩니다.&lt;/em&gt;">The standards you need,<br><em>mapped by default.</em></h2>
+      <p data-ko="센서, 드라이브, 목표 시장을 바탕으로 functional safety 규격을 고르고, 각 규격이 왜 적용되는지 근거 조항과 함께 보여 줍니다.">Functional-safety standards picked from the robot&rsquo;s sensors, drives and target market, each with the reason it applies and the clause behind it.</p>
+    </div>
+    <div class="marq" id="stdMarq" aria-hidden="true"></div>
+    <div class="sec-head" style="gap:10px">
+      <h3 style="font-size:22px" data-ko="엔지니어가 끝까지 판단합니다">The engineer stays in charge</h3>
+    </div>
+    <div class="trust">
+      <div class="why-card"><span class="ix">SIGN-OFF</span><h3 data-ko="모든 결과는 초안">Every result is a draft</h3><p data-ko="모든 화면과 보고서에 엔지니어 검토 표시가 붙고, 최종 판단과 서명은 엔지니어가 합니다.">Every screen and report is marked for review. A qualified engineer makes the final call and signs off.</p></div>
+      <div class="why-card"><span class="ix">DETERMINISTIC</span><h3 data-ko="규칙으로 계산하는 PLr">Rule-based PLr</h3><p data-ko="PLr은 ISO 13482 Table 1과 ISO 13849-1 risk graph로 계산하므로 같은 입력에는 항상 같은 결과가 나옵니다.">PLr comes from ISO 13482 Table 1 and the ISO 13849-1 risk graph, so the same input always gives the same result.</p></div>
+      <div class="why-card"><span class="ix">NO STANDARD TEXT</span><h3 data-ko="규격 원문은 싣지 않습니다">No standard text reproduced</h3><p data-ko="규격은 조항 번호로 인용하고, ISO 13482 Table 1의 PL 값과 ISO 13849-1 risk graph는 계산용 조회 데이터로만 씁니다. 규격 원문은 싣지 않으며, ISO 규격의 저작권은 ISO에 있습니다. 모든 값은 각 회사가 구입한 규격으로 확인하세요.">Standards are cited by clause number. The PL values of ISO 13482 Table 1 and the ISO 13849-1 risk graph are used as lookup data only; no standard text is included. ISO standards are © ISO. Check every value against your own licensed copy.</p></div>
+      <div class="why-card"><span class="ix">NO CUSTOMER DATA</span><h3 data-ko="예시는 가상의 로봇">The example is fictional</h3><p data-ko="CS-1은 가상의 로봇입니다. 기본은 로컬 모드라 입력이 이 브라우저 밖으로 나가지 않습니다. Claude 초안은 직접 켰을 때만 동작합니다.">CS-1 is a fictional robot. By default the page runs locally and nothing you enter leaves this browser. Claude drafting runs only when you turn it on.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="final" aria-labelledby="finalTitle">
+  <div class="wrap">
+    <h2 id="finalTitle" data-ko="안전 서류,&lt;br&gt;오늘 첫 초안부터.">Start your safety case<br>today.</h2>
+    <p data-ko="기본 로컬 모드로 바로 시작하고, 필요할 때만 Claude 초안 기능을 켜세요.">Start right away in local mode, and turn on Claude drafting only when you want it.</p>
+    <div class="row"><button class="btn primary lg" type="button" data-go="describe" data-ko="내 로봇으로 시작하기 →">Start with my robot →</button><button class="btn ghost lg" type="button" data-go="hazards" data-ko="검수된 예시 보기">See the reviewed example</button></div>
+  </div>
+</section>
+
+</div>
+
+<div id="appView" hidden>
+<div class="appbar"><div class="wrap appbar-in">
+  <div class="row" style="gap:10px"><button class="brand brand-btn" type="button" data-home="1" aria-label="Robot Compliance Copilot home"><span class="brand-mark" aria-hidden="true"></span><span class="brand-txt">Robot Compliance Copilot</span></button><span class="crumb" data-ko="워크스페이스">Workspace</span></div>
+  <div class="row"><button class="btn sm ghost" type="button" data-home="1" data-ko="← 소개 페이지">← Overview</button><div class="seg lang" role="group" aria-label="Language"><button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="ko" lang="ko">한국어</button></div></div>
+</div></div>
+<header class="top">
+  <div class="wrap hero">
+    <div class="hero-main">
+      <div class="hero-top"><div class="eyebrow" data-ko="워크스페이스 · EU 시장용 서비스 로봇">Workspace · Service robots for the EU</div></div>
+      <h2 class="ws-title" data-ko="사내 안전팀 워크스페이스">In-house safety team workspace</h2>
+      
+      <p class="tagline" data-ko="사내 안전팀이 하던 첫 작업을 순서대로 합니다: robot type 분류, 적용 규격 정리, hazard 분석, safety function별 PLr, traceability, 남은 산출물. 모든 결과는 근거 조항과 함께 나오고, 엔지니어가 검토합니다.">It does what an in-house safety team does first, in order: robot type, applicable standards, hazard analysis, PLr per safety function, traceability and the deliverables still missing. Every result comes with its clause and goes to your engineer for review.</p>
+      <div class="std-strip" aria-label="Standards covered"><span>ISO 13482:2014</span><span>ISO 13849-1:2023</span><span>Regulation (EU) 2023/1230</span></div>
+      <div class="row"><button class="btn primary" type="button" id="ctaExample" data-ko="검수된 예시 보기">See the reviewed example</button><button class="btn" type="button" id="ctaStart" data-ko="내 로봇 설명하기">Describe your own robot</button></div>
+    </div>
+    <div class="hero-card" id="exampleChip">
+      <div class="eyebrow" data-ko="불러온 예시 · 가상 로봇">Loaded example · fictional</div>
+      <b>CS-1 Concierge Robot</b>
+      <span class="muted" data-ko="공항·쇼핑몰 안내 로봇 · 1.3 m, 70 kg, 1.0 m/s">Guide robot for airports and malls · 1.3 m, 70 kg, 1.0 m/s</span>
+      <dl class="hero-stats">
+        <div><dt>Robot type</dt><dd>1.2</dd></div>
+        <div><dt>Hazards</dt><dd>6</dd></div>
+        <div><dt>Safety functions</dt><dd>7</dd></div>
+        <div><dt>Required PL</dt><dd>d</dd></div>
+      </dl>
+      <span class="reviewed" data-ko="기능안전 엔지니어가 검수한 정답지">Answer key reviewed by a functional-safety engineer</span>
+    </div>
+  </div>
+</header>
+
+<nav class="steps" aria-label="Steps">
+  <div class="wrap" role="tablist"><span class="tab-ind" aria-hidden="true"></span>
+    <button role="tab" id="tab-describe" aria-controls="describe" data-step="describe"><span class="n">1</span><span class="t" data-ko="로봇 설명">Describe</span></button>
+    <button role="tab" id="tab-standards" aria-controls="standards" data-step="standards"><span class="n">2</span><span class="t">Standards Map</span></button>
+    <button role="tab" id="tab-hazards" aria-controls="hazards" data-step="hazards"><span class="n">3</span><span class="t">Hazards → Safety Functions → PLr</span></button>
+    <button role="tab" id="tab-trace" aria-controls="trace" data-step="trace"><span class="n">4</span><span class="t">Traceability</span></button>
+    <button role="tab" id="tab-report" aria-controls="report" data-step="report"><span class="n">5</span><span class="t">Gap Report</span></button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- STEP 1 -->
+<section class="step" id="describe" role="tabpanel" aria-labelledby="tab-describe">
+  <div class="step-head">
+    <div><div class="eyebrow" data-ko="1단계">Step 1</div><h2 data-ko="로봇 설명하기">Describe the robot</h2></div>
+    <p class="muted" data-ko="예시를 고치거나 내 로봇을 평소 쓰는 말로 설명하세요. 입력하는 대로 robot type이 바뀝니다.">Edit the example or describe your own robot in plain words. The robot type updates as you go.</p>
+  </div>
+  <div class="grid2">
+    <div class="sheet">
+      <div class="ai-box" id="aiBox">
+        <label class="ai-consent" for="aiConsent"><input type="checkbox" id="aiConsent"><span><b data-ko="Claude 초안 기능 켜기 (선택)">Turn on Claude drafting (optional)</b> <span class="local-badge" id="localBadge" data-ko="로컬 모드 · 규칙만 사용">Local mode · rules only</span>
+          <small data-ko="기본은 로컬 모드입니다. 모든 계산이 이 브라우저 안에서 규칙대로만 돌아가고, 아무것도 밖으로 나가지 않습니다. 켜면 입력한 설명이 초안 작성을 위해 Anthropic의 Claude로 전송됩니다. 이 데모는 입력을 저장하지 않고, Anthropic API 입력은 기본적으로 모델 학습에 쓰이지 않습니다(claude.ai에서 볼 때는 내 Claude 계정의 데이터 설정을 따릅니다). 제품 요약만 적고, 고객사 기밀 정보는 넣지 마세요.">By default the page runs in local mode: every calculation happens in this browser by rules, and nothing leaves it. Turn this on and your description is sent to Anthropic&rsquo;s Claude to write the draft. The demo does not store what you enter, and Anthropic API inputs are not used for model training by default (on claude.ai your own Claude account&rsquo;s data settings apply). Enter a product summary only, never confidential customer data.</small></span></label>
+        <label class="lab ai-on" for="aiText" data-ko="평소 쓰는 말로 설명하기 <span class=&quot;ai-tag&quot;>Claude</span>">Describe it in your own words <span class="ai-tag">Claude</span></label>
+        <textarea class="ai-on" id="aiText" data-ko-ph="예: 호텔 로비용 안내 로봇, 높이 1.2 m, 45 kg, 최고 시속 3 km, 팔 없음. Safety laser scanner와 bumper 사용. EU에 먼저 출시." placeholder="e.g. A 1.2 m tall reception robot for hotel lobbies, 45 kg, drives at up to 3 km/h, no arm. Uses a safety laser scanner and a bumper. Selling in the EU first."></textarea>
+        <div class="row ai-on">
+          <button class="btn primary" id="aiFill" type="button" data-ko="Claude로 입력란 채우기">Fill the form with Claude</button>
+          <button class="btn" id="aiStop" type="button" hidden data-ko="중지">Stop</button>
+          <span class="ai-status" id="aiStatus" aria-live="polite"></span>
+        </div>
+        <div class="ai-notes" id="aiNotes" hidden></div>
+      </div>
+
+      <div class="fields">
+        <div class="field full"><label class="lab" for="f-name">Robot name</label><input type="text" id="f-name"></div>
+        <div class="field">
+          <label class="lab" for="f-family">ISO 13482 robot family</label>
+          <select id="f-family">
+            <option value="mobileServant" data-ko="Mobile servant robot (고객 서비스, 배송, 안내)">Mobile servant robot (customer service, delivery, guide)</option>
+            <option value="physicalAssistant">Physical assistant robot</option>
+            <option value="personCarrier">Person carrier robot</option>
+          </select>
+        </div>
+        <div class="field" id="restraintField" hidden>
+          <label class="lab" for="f-restraint" data-ko="Physical assistant 유형">Physical assistant type</label>
+          <select id="f-restraint"><option value="restraintFree">Restraint-free</option><option value="restraint">Restraint type</option></select>
+        </div>
+        <div class="field"><label class="lab" for="f-height">Height</label><div class="unit"><input type="number" id="f-height" min="0" step="10"><span>mm</span></div></div>
+        <div class="field"><label class="lab" for="f-mass">Mass</label><div class="unit"><input type="number" id="f-mass" min="0" step="1"><span>kg</span></div></div>
+        <div class="field"><label class="lab" for="f-speed">Maximum speed</label><div class="unit"><input type="number" id="f-speed" min="0" step="0.1"><span>m/s</span></div></div>
+        <div class="field"><label class="lab" for="f-manip">Manipulator (arm)</label><select id="f-manip"><option value="no" data-ko="없음">No</option><option value="yes" data-ko="있음">Yes</option></select></div>
+        <div class="field full"><label class="lab" for="f-env">Environment</label><input type="text" id="f-env"></div>
+        <fieldset class="field full"><legend data-ko="주변에 있을 수 있는 사람">Who can be near it</legend><div class="checks" id="f-users"></div></fieldset>
+        <fieldset class="field full"><legend data-ko="Safety 관련 센서와 드라이브">Safety-related sensing and drives</legend><div class="checks" id="f-sensors"></div></fieldset>
+        <fieldset class="field full"><legend data-ko="목표 시장">Target markets</legend><div class="checks" id="f-markets"></div></fieldset>
+      </div>
+      <div class="row"><button class="btn" id="resetExample" type="button" data-ko="CS-1 예시 다시 불러오기">Reload the CS-1 example</button></div>
+    </div>
+
+    <div class="sheet sticky" id="verdict" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section class="step" id="standards" role="tabpanel" aria-labelledby="tab-standards" hidden>
+  <div class="step-head">
+    <div><div class="eyebrow" data-ko="2단계">Step 2</div><h2>Standards Map</h2></div>
+    <p class="muted" data-ko="이 로봇에 적용되는 functional safety 규격과, 각 규격을 적용하게 된 입력값입니다.">Functional-safety standards that apply to this robot, and which input triggered each one.</p>
+  </div>
+  <div class="tabs-mkt row" id="mktTabs"></div>
+  <div id="stdBody"></div>
+</section>
+
+<!-- STEP 3 -->
+<section class="step" id="hazards" role="tabpanel" aria-labelledby="tab-hazards" hidden>
+  <div class="step-head">
+    <div><div class="eyebrow" data-ko="3단계">Step 3</div><h2>Hazards → Safety Functions → PLr</h2></div>
+    <p class="muted" data-ko="ISO 13482 Annex A의 hazard, 각 hazard에 대응하는 safety function, 그리고 그 required performance level입니다.">Hazards from ISO 13482 Annex A, the safety function for each, and its required performance level.</p>
+  </div>
+  <div id="simBox"></div>
+  <div id="hzBody"></div>
+</section>
+
+<!-- STEP 4 -->
+<section class="step" id="trace" role="tabpanel" aria-labelledby="tab-trace" hidden>
+  <div class="step-head">
+    <div><div class="eyebrow" data-ko="4단계">Step 4</div><h2>Traceability Map</h2></div>
+    <p class="muted" data-ko="모든 hazard가 어떤 safety function으로 막히고, 각 safety function이 어떤 규격을 따르는지 한눈에 보여 줍니다.">How every hazard is covered by a safety function, and which standards each safety function follows.</p>
+  </div>
+  <div id="trBody"></div>
+</section>
+
+<section class="step" id="report" role="tabpanel" aria-labelledby="tab-report" hidden>
+  <div class="step-head">
+    <div><div class="eyebrow" data-ko="5단계">Step 5</div><h2>Gap Report</h2></div>
+    <p class="muted" data-ko="출시 전에 아직 갖추지 못한 functional safety 산출물을 만들어야 하는 순서대로 보여 줍니다.">Functional-safety deliverables still missing before launch, in the order to produce them.</p>
+  </div>
+  <div id="rpBody"></div>
+</section>
+
+</main>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="ft-grid">
+      <div style="display:grid;gap:10px"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>Robot Compliance Copilot</div><p data-ko="ISO 13482 서비스 로봇을 위한 사내 안전팀 워크스페이스. Bloom × Anthropic 해커톤 프로젝트.">The in-house safety team workspace for ISO 13482 service robots. A Bloom × Anthropic hackathon project.</p></div>
+      <div><h4 data-ko="워크스페이스">Workspace</h4><ul><li><button type="button" data-go="describe" data-ko="1. 로봇 설명">1. Describe</button></li><li><button type="button" data-go="standards">2. Standards Map</button></li><li><button type="button" data-go="hazards">3. Hazards → PLr</button></li><li><button type="button" data-go="trace">4. Traceability</button></li><li><button type="button" data-go="report">5. Gap Report</button></li></ul></div>
+      <div><h4 data-ko="규격">Standards</h4><ul><li>ISO 13482:2014</li><li>ISO 13849-1:2023</li><li>ISO 12100:2010</li><li>Regulation (EU) 2023/1230</li></ul></div>
+    </div>
+    <div class="ft-bot"><span data-ko="모든 결과는 자격을 갖춘 기능안전 엔지니어가 검토할 초안입니다. 규격은 조항 번호로 인용하고 Table 1 값과 risk graph는 조회 데이터로만 쓰며, 원문은 싣지 않습니다. ISO 규격의 저작권은 ISO에 있습니다. CS-1 로봇은 가상의 로봇이며 고객 데이터를 포함하지 않습니다.">Every result is a draft for a qualified functional-safety engineer to review. Standards are cited by clause number; Table 1 values and the risk graph are used as lookup data, and no standard text is included. ISO standards are © ISO. The CS-1 robot is fictional and contains no customer data.</span><span>© 2026 Robot Compliance Copilot</span></div>
+  </div>
+</footer>
+
+<script src="claude-shim.js"></script>
+<script>
+const EXAMPLE = {"schemaVersion": "0.2", "status": "DRAFT - engineer review required", "disclaimer": "Fictional example robot for demonstration. Not based on any real customer project. Every result requires review by a qualified functional-safety engineer.", "robot": {"name": "CS-1 Concierge Robot (fictional)", "category": "Customer service robot", "iso13482Family": "mobileServant", "definitionRef": "ISO 13482:2014, 3.14 (mobile servant robot: travels to perform serving tasks in interaction with humans, e.g. exchanging information)", "intendedUse": "Autonomous information and wayfinding robot in indoor public buildings (airport terminals, shopping malls, hotel lobbies). Answers questions on a touchscreen and by voice, and escorts visitors to a destination at walking pace.", "parameters": {"heightMm": 1300, "massKg": 70, "footprintMm": "550 x 600", "maxSpeedMs": 1.0, "reducedSpeedMs": 0.5, "manipulator": false, "drive": "Differential drive, 2 drive wheels + 2 casters", "maxSlopePercent": 5, "sensors": "Front and rear safety laser scanners (IEC 61496-3 Type 3), downward ToF cliff sensors, perimeter bumper (PSPE), 3D camera (non-safety, navigation only)", "humanInterface": "21-inch touchscreen, microphone/speaker, status light ring, emergency stop button on the rear upper body", "connectivity": "Wi-Fi fleet management (remote send-to-goal and pause commands)"}, "environment": "Indoor, flat hard floors and carpet, ramps up to 5 %, crowds at peak hours, escalators, moving walkways and stairs in the building.", "users": "General public including children, elderly persons, wheelchair users and persons with visual or hearing impairment (untrained). Venue staff (trained operators). Service technicians.", "markets": ["EU", "US"], "robotTypeClassification": {"standard": "ISO 13482:2014, 6.1.2.1", "criteria": {"small": {"value": false, "reason": "1.3 m tall: a falling robot can hit the upper body of a child or a seated person (6.1.2.1 NOTE 1)."}, "lightweight": {"value": false, "reason": "70 kg: a trapped person cannot reliably lift it, and impact can cause more than minor injury (NOTE 2)."}, "slow": {"value": false, "reason": "1.0 m/s (60 m/min) is not slow for the intended user group: elderly visitors walk slower than this, and NOTE 3 ties 'slow' to the intended user group's walking speed as determined by risk assessment."}, "noManipulator": {"value": true, "reason": "No arm; touchscreen and head only."}}, "result": "1.2", "rule": "Type 1.1 requires small AND lightweight AND slow AND no manipulator; any 'no' gives Type 1.2."}}, "plrMethod": {"primary": "ISO 13482:2014 Table 1 (Tables 3-9) value for Type 1.2, per 6.1.3. Deviations only via 6.1.4 with documented risk assessment.", "crossCheck": "ISO 13849-1:2023 Annex A risk graph (Figure A.1), P from Table A.1/A.2. Used to test whether 6.1.4 could demand a different PL, and to derive PLr for functions not listed in 6.1.1 a)-g).", "riskGraphTable": {"S1F1P1": "a", "S1F1P2": "b", "S1F2P1": "b", "S1F2P2": "c", "S2F1P1": "c", "S2F1P2": "d", "S2F2P1": "d", "S2F2P2": "e"}, "precedence": "ISO 13482 Table 1 > manual/6.1.4 deviation > risk graph."}, "hazards": [{"id": "H1", "title": "Collision with a person during autonomous travel or guiding", "annexA": [69], "clause": "5.10.8", "lifecyclePhase": "Operation", "hazardousSituation": "Robot travels at up to 1.0 m/s through a crowded terminal; a person steps into its path or approaches from the side (4.2 d).", "harm": "Impact, knock-down and fall; for elderly persons hip fracture or head injury.", "inherentlySafeDesign": "Rounded shape and soft outer cover (5.10.8.2 c); maximum speed limited by drive design.", "informationForUse": "Describe collision avoidance behaviour (5.10.8.4); light ring and sound to make the robot noticeable (5.14).", "verificationMethods": ["C", "D", "E", "F", "G"], "safetyFunctions": ["SF3", "SF4", "SF2"]}, {"id": "H2", "title": "Contact with a person the scanner cannot detect (small child, person on the floor) or during close interaction at the screen", "annexA": [74, 76], "clause": "5.10.8.3 NOTE 3, 5.10.9", "lifecyclePhase": "Operation", "hazardousSituation": "A small child runs below or very close to the scanner plane, or a visitor stands against the robot while it starts to turn or move off.", "harm": "Child knocked over; foot run over by a wheel; trapping between robot and wall.", "inherentlySafeDesign": "Bumper and lower body without pinch points; wheels shrouded (5.6, 5.13).", "informationForUse": "Warnings on supervision of children.", "verificationMethods": ["C", "D", "F", "G"], "safetyFunctions": ["SF5", "SF4"]}, {"id": "H3", "title": "Robot falls down stairs or off a floor edge", "annexA": [58, 82], "clause": "5.10.3, 5.16", "lifecyclePhase": "Operation", "hazardousSituation": "Localization error or map change brings the robot to a staircase, mezzanine edge or open floor hatch.", "harm": "Robot (70 kg) falls onto persons below or on the stairs.", "inherentlySafeDesign": "Restricted space defined away from stairs where possible (5.16.2 a).", "informationForUse": "Specify environments and conditions where localization errors can occur (5.16.4).", "verificationMethods": ["B", "D", "F"], "safetyFunctions": ["SF7"]}, {"id": "H4", "title": "Robot enters a forbidden area (escalator or moving-walkway landing)", "annexA": [81], "clause": "5.16, 6.3", "lifecyclePhase": "Operation", "hazardousSituation": "While escorting a visitor, a navigation or localization error leads the robot onto an escalator landing.", "harm": "Robot falls or is carried onto the escalator; persons on the escalator crushed or knocked down.", "inherentlySafeDesign": "Escalator zones excluded from all routes in the map (5.12.2 a).", "informationForUse": "Installation instructions for floor markers and forbidden-zone setup.", "verificationMethods": ["B", "F", "G"], "safetyFunctions": ["SF6"]}, {"id": "H5", "title": "Unexpected start-up, restart or remote command", "annexA": [18, 19], "clause": "5.4, 6.9.3", "lifecyclePhase": "Start-up, operation, after protective stop", "hazardousSituation": "Robot is powered on or receives a fleet 'send-to-goal' command while a visitor is standing next to it; Wi-Fi link drops mid-task.", "harm": "Impact or foot run over.", "inherentlySafeDesign": "Start-up self-test of safety functions; start in restricted speed (5.4.2 a, c).", "informationForUse": "Start-up and restart instructions (5.4.4).", "verificationMethods": ["B", "D", "F"], "safetyFunctions": ["SF2"]}, {"id": "H6", "title": "Any situation needing an immediate manual stop", "annexA": [], "clause": "6.2.2.2", "lifecyclePhase": "All", "hazardousSituation": "Staff or visitor sees a person trapped or the robot behaving abnormally.", "harm": "Aggravation of injury.", "inherentlySafeDesign": "-", "informationForUse": "E-stop location marked; staff training.", "verificationMethods": [], "safetyFunctions": ["SF1"], "note": "Touchscreen and voice cannot serve as an emergency stop; a physical button on the robot gives the equal level of safety (6.2.2.2)."}], "otherHazardsCovered": [{"annexA": [56, 58, 62], "item": "Overturning onto a person (leaning, ramp turn, collision)", "measure": "Inherent design: low centre of gravity, wide support area, stability tested; no stability control used for risk reduction, so 6.1.1 g) does not apply (5.10.2.2)."}, {"annexA": [20, 21, 23], "item": "Sharp edges, gaps, shape during collision", "measure": "Inherent design (5.6)."}, {"annexA": [26], "item": "Silent operation / lack of awareness", "measure": "Sound and light ring (5.14); not an SRP/CS function."}, {"annexA": [44, 45, 46, 47], "item": "EMI causing loss of safety function", "measure": "EMC immunity for safety functions (5.8)."}, {"annexA": [78], "item": "Hazardous autonomous action (wrong decision)", "measure": "Safety functions SF3-SF7 do not depend on the AI/navigation stack (5.12, 5.16.2 b)."}], "safetyFunctions": [{"id": "SF1", "name": "Emergency stop", "hazards": ["H6"], "table1FunctionId": "estop", "trigger": "Emergency stop button on the robot body is pressed.", "reaction": "Stop category 0 or 1 (IEC 60204-1) of all motion; drive power removed; latched.", "safeState": "Robot stopped, drives de-energized, brakes applied.", "reset": "Manual only; reset does not restart the robot (6.2.2.2 f).", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.2.2.2, Table 3, Type 1.2"}, "riskGraphCrossCheck": {"S": "S2", "F": "F1", "P": "P2", "result": "d", "note": "Emergency demand is rare; trapped person cannot escape."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.2.2.2 and Table 3", "ISO 13850", "IEC 60204-1 (stop categories, emergency stop device)"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}, {"id": "SF2", "name": "Protective stop with monitored standstill", "hazards": ["H5", "H1"], "table1FunctionId": "pstop", "trigger": "Demand from SF3, SF5, SF6, SF7; failed start-up self-test; loss of fleet/command connection during motion; power-on.", "reaction": "Stop category 1 or 2 with standstill monitoring; unintended motion during standstill gives category 0 stop.", "safeState": "Robot at monitored standstill.", "reset": "Automatic restart only after the person has left the protective stop space (5.14.3 c), otherwise manual. Power-on always ends in monitored standstill until a user action (5.4.3 b).", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.2.2.3, Table 4, Type 1.2"}, "riskGraphCrossCheck": {"S": "S2", "F": "F1", "P": "P2", "result": "d", "note": "For H5: unexpected motion next to an unaware visitor."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.2.2.3 and Table 4", "ISO 13482:2014, 5.4.3, 6.9.3", "ISO 13849-1:2023, 5.2.2.3 (manual reset), 5.2.2.4 (start/restart)", "IEC 61800-5-2 (safe operating stop)"], "confidence": "high", "openQuestions": ["Is automatic restart acceptable in all public areas, or only outside designated child areas?"], "reviewStatus": "engineer_review_required"}, {"id": "SF3", "name": "Hazardous collision avoidance (safety laser scanner, speed-dependent fields)", "hazards": ["H1"], "table1FunctionId": "collision", "trigger": "Person detected in the protective stop space; field size switched with actual speed.", "reaction": "Warning field: request speed reduction (SF4). Protective field: protective stop (SF2).", "safeState": "Robot stopped before reaching the person.", "designNotes": "Minimum distance per ISO 13855 (6.5.2.1), braking distance under worst floor condition (6.2.3); detected relative approach speed may replace K.", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.5.2.1, Table 7, Type 1.2"}, "riskGraphCrossCheck": {"S": "S2", "F": "F2", "P": "P2", "result": "e", "pFactors": {"skill": "C (untrained public)", "speed": "B (1.0 m/s)", "escape": "B (crowd)", "recognition": "A (robot visible)", "complexity": "A"}, "note": "Raw risk graph gives e. ISO 13849-1:2023 A.2 allows a one-level downgrade if probability of occurrence is justified as low (most persons notice the robot and step aside, 5.14 measures) -> d, consistent with Table 7. Engineer decision: A.2 downgrade accepted, PLr d (no 6.1.4 deviation)."}, "plrFinal": "d", "references": ["ISO 13482:2014, 5.10.8.3 a), 6.5.2.1 and Table 7", "ISO 13855", "IEC 61496-3", "IEC/TS 62046", "ISO 13849-1:2023, Annex A.2"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}, {"id": "SF4", "name": "Safety-related speed control", "hazards": ["H1", "H2"], "table1FunctionId": "speed", "trigger": "Always active. Limit switched by context: 1.0 m/s normal; 0.5 m/s when a person is in the warning field, after start-up, near the dock and on ramps.", "reaction": "Speed above active limit or speed-monitoring fault gives a protective stop.", "safeState": "Speed at or below active limit, or robot stopped.", "designNotes": "Limits from speeds of representative points (6.4); only authorized persons can change limits.", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.4, Table 6, Type 1.2"}, "riskGraphCrossCheck": {"S": "S2", "F": "F2", "P": "P2", "result": "e", "note": "Same exposure as SF3; same A.2 downgrade argument applies. Engineer decision: A.2 downgrade accepted, PLr d (no 6.1.4 deviation)."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.4 and Table 6", "ISO 13482:2014, 5.4.2 c) (restricted speed at start-up)", "ISO 13482:2014, 5.10.3.3 d) (dynamics on gradients)"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}, {"id": "SF5", "name": "Safety-related force control (perimeter bumper)", "hazards": ["H2"], "table1FunctionId": "force", "trigger": "Bumper (PSPE) actuated anywhere around the base.", "reaction": "Protective stop and short reverse to release the person.", "safeState": "Robot stopped, contact force released.", "designNotes": "Low actuation force and coverage at child foot/leg height (5.10.8.3 NOTE 3). Force reaction per 6.7 a)-b).", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.7, Table 9, Type 1.2"}, "riskGraphCrossCheck": {"S": "S1", "F": "F2", "P": "P2", "result": "c", "note": "Starting point after SF4 (0.5 m/s near persons) and soft bumper (A.2: additional safety functions are taken into account). Table 9 value d is higher and governs. Engineer decision: S1 confirmed."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.5.2.2, 6.7 and Table 9", "ISO 13856-3 (bumpers)", "ISO 13482:2014, 5.10.8.3 NOTE 3"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}, {"id": "SF6", "name": "Forbidden area avoidance (escalators, moving walkways)", "hazards": ["H4"], "table1FunctionId": "workspace", "trigger": "Robot position (from localization) reaches a virtual forbidden-zone boundary, OR a floor marker at an escalator approach is detected, OR localization confidence drops below threshold.", "reaction": "Protective stop before the boundary; motion out of the zone only at safety-related reduced speed (6.3).", "safeState": "Robot stopped outside the forbidden area.", "designNotes": "Two diverse sensing principles (map localization + floor markers) per 5.12.3 d); markers placed without blind spots (6.5.3); restricted space bounded by actual stopping position (6.3).", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, 6.3, Table 5, Type 1.2"}, "riskGraphCrossCheck": {"S": "S2", "F": "F1", "P": "P2", "result": "d", "note": "Escalator approaches passed occasionally; persons on escalator cannot escape."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.3 and Table 5", "ISO 13482:2014, 5.16.3 a)", "ISO 13482:2014, 5.12.3 d)"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}, {"id": "SF7", "name": "Drop-off detection (travel surface sensing for stairs and edges)", "hazards": ["H3"], "table1FunctionId": "workspace", "trigger": "Downward ToF sensors detect a floor drop beyond the step-height limit ahead of the robot.", "reaction": "Protective stop within the sensing distance at current speed.", "safeState": "Robot stopped before the edge.", "designNotes": "Independent of navigation (5.16.2 b). Braking distance on worst floor checked (6.2.3).", "plrTypeC": {"value": "d", "source": "ISO 13482:2014, Table 1 row 'Limits to workspace (incl. forbidden area avoidance 6.5.3)', Type 1.2 (mapping confirmed by engineer)"}, "riskGraphCrossCheck": {"S": "S2", "F": "F1", "P": "P2", "result": "d", "note": "Stairs only in a few locations; persons below cannot avoid a falling robot."}, "plrFinal": "d", "references": ["ISO 13482:2014, 6.5.3", "ISO 13482:2014, 5.10.3.3 a), c)", "ISO 13482:2014, 5.16.1"], "confidence": "high", "openQuestions": [], "reviewStatus": "engineer_review_required"}], "standardsHint": {"EU": ["Machinery Regulation (EU) 2023/1230 (from 2027-01-20)", "EN ISO 13482:2014 (type-C)", "EN ISO 12100:2010", "EN ISO 13849-1:2023"], "note": "Functional safety scope only. US mapping to be verified by the engineer in the Standards Map step."}, "reviewLog": [{"date": "2026-10-16", "reviewer": "Functional safety engineer", "items": ["SF3", "SF4"], "decision": "Keep PLr d per ISO 13482 Table 6/7; A.2 one-level downgrade accepted, no 6.1.4 deviation to PL e."}, {"date": "2026-10-16", "reviewer": "Functional safety engineer", "items": ["SF5"], "decision": "S1 confirmed (starting point after SF4 reduced speed and soft bumper); PLr d per Table 9."}, {"date": "2026-10-16", "reviewer": "Functional safety engineer", "items": ["SF7"], "decision": "Travel surface sensing (6.5.3) mapped to the Table 1 row 'Limits to workspace (incl. forbidden area avoidance)'; PLr d."}, {"date": "2026-10-16", "reviewer": "Functional safety engineer", "items": ["robotTypeClassification"], "decision": "'slow' = no: 1.0 m/s is not below the walking speed of elderly users. Type 1.2 unchanged."}], "outOfScope": [{"annexA": [1, 2, 3, 4], "item": "Battery and charging hazards", "reason": "Handled by the battery team's separate functional safety work."}]};
+
+/* Language: English source strings, Korean via L(en, ko). Standard terms stay in English in both. */
+let LANG = 'en';
+try{ LANG = localStorage.getItem('rcc-lang')==='ko' ? 'ko' : 'en'; }catch(e){}
+const L = (en,ko) => LANG==='ko' ? ko : en;
+function applyStatic(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-ko]').forEach(el=>{
+    if(el.dataset.en===undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = LANG==='ko' ? el.dataset.ko : el.dataset.en;
+  });
+  document.querySelectorAll('[data-ko-ph]').forEach(el=>{
+    if(el.dataset.enPh===undefined) el.dataset.enPh = el.placeholder;
+    el.placeholder = LANG==='ko' ? el.dataset.koPh : el.dataset.enPh;
+  });
+  document.querySelectorAll('.seg.lang button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.lang===LANG));
+}
+/* Korean overlay for the reviewed CS-1 example (the JSON answer key stays the English source). */
+const KX = {
+  H1:{title:'자율 주행이나 안내 중 사람과 충돌',hazardousSituation:'붐비는 터미널에서 로봇이 최대 1.0 m/s로 주행하는데, 사람이 진로로 들어오거나 옆에서 다가옵니다 (4.2 d).',harm:'부딪힘, 넘어짐, 낙상. 고령자는 고관절 골절이나 머리 부상으로 이어질 수 있습니다.'},
+  H2:{title:'스캐너가 감지하지 못하는 사람(작은 어린이, 바닥에 있는 사람)이나 화면 앞에서 가까이 상호작용하는 사람과의 접촉',hazardousSituation:'작은 어린이가 스캐너 평면 아래나 아주 가까이로 뛰어들거나, 로봇이 회전하거나 출발할 때 방문객이 로봇에 붙어 서 있습니다.',harm:'어린이가 넘어지거나, 바퀴에 발이 깔리거나, 로봇과 벽 사이에 끼입니다.'},
+  H3:{title:'로봇이 계단이나 바닥 끝에서 추락',hazardousSituation:'위치 추정 오류나 지도 변경 때문에 로봇이 계단, 중층 난간 끝, 열린 바닥 해치 쪽으로 갑니다.',harm:'70 kg의 로봇이 아래쪽이나 계단 위의 사람에게 떨어집니다.'},
+  H4:{title:'로봇이 forbidden area(에스컬레이터, 무빙워크 승강장)에 진입',hazardousSituation:'방문객을 안내하던 중 내비게이션이나 위치 추정 오류로 로봇이 에스컬레이터 승강장에 들어갑니다.',harm:'로봇이 넘어지거나 에스컬레이터에 실려 가고, 에스컬레이터 위의 사람이 끼이거나 넘어집니다.'},
+  H5:{title:'예기치 않은 기동, 재기동, 원격 명령',hazardousSituation:'방문객이 바로 옆에 서 있는데 로봇 전원이 켜지거나 관제 시스템에서 이동 명령(send-to-goal)을 받습니다. 작업 중 Wi-Fi 연결이 끊기기도 합니다.',harm:'부딪히거나 발이 깔립니다.'},
+  H6:{title:'즉시 수동 정지가 필요한 모든 상황',hazardousSituation:'직원이나 방문객이 끼인 사람이나 로봇의 이상 동작을 발견합니다.',harm:'부상이 더 심해집니다.'},
+  SF1:{name:'Emergency stop',trigger:'로봇 본체의 emergency stop 버튼을 누릅니다.',rationale:'Emergency stop이 필요한 상황은 드물지만, 끼인 사람은 스스로 빠져나올 수 없습니다.'},
+  SF2:{name:'Monitored standstill을 포함한 protective stop',trigger:'SF3, SF5, SF6, SF7의 요구, 기동 시 자가 진단 실패, 주행 중 관제·명령 연결 끊김, 전원 투입.',rationale:'H5 기준: 로봇을 의식하지 못한 방문객 옆에서 예기치 않게 움직입니다.'},
+  SF3:{name:'Hazardous collision avoidance (safety laser scanner, 속도 연동 field)',trigger:'Protective stop 영역에서 사람을 감지합니다. Field 크기는 실제 속도에 따라 전환됩니다.',rationale:'Risk graph 원래 결과는 e입니다. ISO 13849-1:2023 A.2는 발생 확률이 낮다는 근거가 있으면 한 단계 낮추는 것을 허용합니다(대부분의 사람은 로봇을 알아채고 비켜서며, 5.14 대책이 있음). 그래서 d이고 Table 7과 일치합니다. 엔지니어 결정: A.2 하향 채택, PLr d (6.1.4 deviation 없음).'},
+  SF4:{name:'Safety-related speed control',trigger:'항상 작동합니다. 제한값은 상황에 따라 바뀝니다: 평소 1.0 m/s, warning field에 사람이 있을 때와 기동 직후, 도크 근처, 경사로에서는 0.5 m/s.',rationale:'노출 조건이 SF3와 같아서 같은 A.2 하향 근거가 적용됩니다. 엔지니어 결정: A.2 하향 채택, PLr d (6.1.4 deviation 없음).'},
+  SF5:{name:'Safety-related force control (하부 둘레 bumper)',trigger:'하부 둘레 어디서든 bumper (PSPE)가 작동합니다.',rationale:'SF4(사람 근처 0.5 m/s)와 부드러운 bumper를 적용한 상태에서 출발합니다(A.2: 다른 safety function을 고려함). Table 9 값 d가 더 높으므로 d를 적용합니다. 엔지니어 결정: S1 확정.'},
+  SF6:{name:'Forbidden area avoidance (에스컬레이터, 무빙워크)',trigger:'위치 추정상 로봇이 가상 금지 구역 경계에 닿거나, 에스컬레이터 진입부의 바닥 마커를 감지하거나, 위치 추정 신뢰도가 기준 아래로 떨어지면 작동합니다.',rationale:'에스컬레이터 진입부는 가끔 지나가지만, 에스컬레이터 위의 사람은 피할 수 없습니다.'},
+  SF7:{name:'Drop-off detection (계단과 바닥 끝 travel surface sensing)',trigger:'하향 ToF 센서가 로봇 앞에서 단차 한계를 넘는 바닥 낙차를 감지합니다.',rationale:'계단은 일부 장소에만 있지만, 아래에 있는 사람은 떨어지는 로봇을 피할 수 없습니다.'},
+  covered:[
+    {item:'사람 쪽으로 넘어짐 (기댐, 경사로 회전, 충돌)',measure:'Inherent design: 낮은 무게중심, 넓은 지지 면적, 안정성 시험. 위험 감소에 stability control을 쓰지 않으므로 6.1.1 g)는 적용되지 않습니다 (5.10.2.2).'},
+    {item:'날카로운 모서리, 틈새, 충돌 시 형상',measure:'Inherent design (5.6).'},
+    {item:'무소음 동작, 로봇을 알아채지 못함',measure:'소리와 빛 링 (5.14). SRP/CS 기능이 아닙니다.'},
+    {item:'EMI로 인한 safety function 상실',measure:'Safety function의 EMC 내성 (5.8).'},
+    {item:'위험한 자율 동작 (잘못된 판단)',measure:'Safety function SF3–SF7은 AI·내비게이션 스택에 의존하지 않습니다 (5.12, 5.16.2 b).'}],
+  outOfScope:[{item:'배터리와 충전 hazard',reason:'배터리 팀이 별도로 functional safety를 수행합니다.'}]
+};
+const EX_ENV = {en:'Indoor public buildings: airport terminals, shopping malls, hotel lobbies. Ramps up to 5 %.', ko:'실내 공공시설: 공항 터미널, 쇼핑몰, 호텔 로비. 경사로 최대 5 %.'};
+
+/* ISO 13482:2014 Table 1 PL values by robot type (Tables 3-9). Footnote numbers only. */
+const TYPES = ['1.1','1.2','2.1','2.2','2.3','2.4','3.1','3.2'];
+const TABLE1 = {
+  estop:{label:'Emergency stop',clause:'6.2.2.2, Table 3',v:{'1.1':'d','1.2':'d','2.1':'c','2.2':'d','2.3':'c','2.4':'d','3.1':'d','3.2':'d'}},
+  pstop:{label:'Protective stop',clause:'6.2.2.3, Table 4',v:{'1.1':'b','1.2':'d','2.1':'b','2.2':'d','2.3':'b','2.4':'c','3.1':'c','3.2':'e'}},
+  workspace:{label:'Limits to workspace (incl. forbidden area avoidance)',clause:'6.3, 6.5.3, Table 5',v:{'1.1':'b','1.2':'d','2.1':'b','2.2':'d','2.3':'a','2.4':'d','3.1':'N/A','3.2':'e'},fn:{'1.1':{n:1,forbidden:'d'}}},
+  speed:{label:'Safety-related speed control',clause:'6.4, Table 6',v:{'1.1':'b','1.2':'d','2.1':'b','2.2':'b','2.3':'b','2.4':'d','3.1':'c','3.2':'e'}},
+  force:{label:'Safety-related force control',clause:'6.7, Table 9',v:{'1.1':'b','1.2':'d','2.1':'b','2.2':'e','2.3':'a','2.4':'b','3.1':'N/A','3.2':'N/A'},fn:{'2.1':{n:3},'2.2':{n:4},'2.4':{n:5}}},
+  collision:{label:'Hazardous collision avoidance',clause:'6.5.2.1, Table 7',v:{'1.1':'b','1.2':'d','2.1':'N/A','2.2':'N/A','2.3':'b','2.4':'d','3.1':'N/A','3.2':'e'},fn:{'3.2':{n:6}}},
+  stability:{label:'Stability control (incl. overload protection)',clause:'6.6, Table 8',v:{'1.1':'b','1.2':'d','2.1':'N/A','2.2':'c','2.3':'b','2.4':'d','3.1':'b','3.2':'d'},fn:{'1.2':{n:2},'2.4':{n:2},'3.2':{n:2},'3.1':{n:7}}}
+};
+
+/* Robot type criteria per ISO 13482:2014 6.1.2. */
+const FAMILY = {
+  mobileServant:{low:'1.1',high:'1.2',clause:'6.1.2.1',crit:[
+    {k:'small',label:'Small',auto:true},{k:'lightweight',label:'Lightweight',auto:true},{k:'slow',label:'Slow',auto:true},{k:'noManipulator',label:'No manipulator',auto:true}]},
+  restraintFree:{low:'2.3',high:'2.4',clause:'6.1.2.2.2',crit:[
+    {k:'lowPowered',label:'Low powered'},{k:'noAutonomousMode',label:'No autonomous mode'},{k:'staticallyStable',label:'Statically stable'},{k:'lightweight',label:'Lightweight',auto:true},{k:'slow',label:'Slow',auto:true}]},
+  restraint:{low:'2.1',high:'2.2',clause:'6.1.2.2.1',crit:[{k:'overpowerable',label:'User can overpower the robot'}]},
+  personCarrier:{low:'3.1',high:'3.2',clause:'6.1.2.3',crit:[
+    {k:'standingSingle',label:'Standing, single passenger'},{k:'indoorFlat',label:'Indoor flat surfaces'},{k:'slow',label:'Slow',auto:true},{k:'lightweight',label:'Lightweight',auto:true},{k:'semiAutonomous',label:'Semi-autonomous'}]}
+};
+/* Demo assumptions for suggestions. ISO 13482 leaves these limits to the manufacturer. */
+const LIMITS = {smallMm:600, lightKg:15, walkAdult:1.67, walkVulnerable:0.8};
+
+const USERS = [['public','General public','일반 대중'],['children','Children','어린이'],['elderly','Elderly persons','고령자'],['impaired','Persons with visual or hearing impairment','시각·청각 장애인'],['trained','Trained staff only','교육받은 직원만']];
+const SENSORS = [['scanner','Safety laser scanner'],['bumper','Bumper (PSPE)'],['cliff','Drop-off (cliff) sensors','낙하(cliff) 감지 센서'],['camera','3D camera (non-safety)','3D 카메라 (non-safety)'],['safeDrive','Safety-rated drive monitoring','Safety-rated 드라이브 모니터링']];
+const MARKETS = [['EU','EU'],['US','US']];
+
+function exampleState(){
+  const r = EXAMPLE.robot, p = r.parameters;
+  return {name:r.name.replace(' (fictional)',''), family:'mobileServant', restraint:'restraintFree',
+    heightMm:p.heightMm, massKg:p.massKg, maxSpeedMs:p.maxSpeedMs, manipulator:!!p.manipulator,
+    env:EX_ENV[LANG],
+    users:{public:true,children:true,elderly:true,impaired:true,trained:false},
+    sensors:{scanner:true,bumper:true,cliff:true,camera:true,safeDrive:true},
+    markets:{EU:true,US:true}, overrides:{slow:false}, flags:{}, ai:{}, isExample:true};
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem('rcc-state')||'null'); }catch(e){ S = null; }
+if(!S || !S.users) S = exampleState();
+function save(){ try{ localStorage.setItem('rcc-state', JSON.stringify(S)); }catch(e){} }
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const famKey = () => S.family==='physicalAssistant' ? S.restraint : S.family;
+
+function suggest(){
+  const vulnerable = S.users.children || S.users.elderly || S.users.impaired;
+  const walk = vulnerable ? LIMITS.walkVulnerable : LIMITS.walkAdult;
+  const out = {};
+  const h = +S.heightMm, m = +S.massKg, v = +S.maxSpeedMs;
+  out.small = S.heightMm==='' || S.heightMm==null ? null : {v:h<=LIMITS.smallMm, why:L(`${h} mm. ${h<=LIMITS.smallMm?'Low enough':'Tall enough'} that a falling robot ${h<=LIMITS.smallMm?'cannot':'can'} reach the upper body of a seated person or child.`, h<=LIMITS.smallMm?`${h} mm. 낮아서 넘어져도 앉아 있는 사람이나 어린이의 상체에 닿지 않습니다.`:`${h} mm. 높아서 넘어지면 앉아 있는 사람이나 어린이의 상체에 닿을 수 있습니다.`), src:'6.1.2.1 NOTE 1'};
+  out.lightweight = S.massKg==='' || S.massKg==null ? null : {v:m<=LIMITS.lightKg, why:L(`${m} kg. ${m<=LIMITS.lightKg?'A single user can lift it to free themselves.':'A trapped person cannot reliably lift it, and impact can cause more than minor injury.'}`, `${m} kg. ${m<=LIMITS.lightKg?'사용자 혼자 들어 올려 빠져나올 수 있습니다.':'깔린 사람이 혼자 들어 올리기 어렵고, 부딪히면 경상 이상의 부상이 날 수 있습니다.'}`), src:'6.1.2.1 NOTE 2'};
+  out.slow = S.maxSpeedMs==='' || S.maxSpeedMs==null ? null : {v:v<walk, why:L(`${v} m/s (${Math.round(v*60)} m/min) against the walking speed of the intended user group${vulnerable?' (elderly persons and children walk slower than healthy adults)':''}.`, `${v} m/s (분당 ${Math.round(v*60)} m)를 대상 사용자의 보행 속도와 비교했습니다.${vulnerable?' 고령자와 어린이는 건강한 성인보다 느리게 걷습니다.':''}`), src:'6.1.2.1 NOTE 3'};
+  out.noManipulator = {v:!S.manipulator, why:S.manipulator?L('Has an arm.','팔이 있습니다.'):L('No arm.','팔이 없습니다.'), src:'6.1.2.1'};
+  return out;
+}
+function criteria(){
+  const def = FAMILY[famKey()], sg = suggest();
+  return def.crit.map(c=>{
+    const s = c.auto ? sg[c.k] : null;
+    const ov = S.overrides[c.k];
+    const val = (ov!==undefined && ov!==null) ? ov : (s ? s.v : (S.flags[c.k] ?? null));
+    return {...c, s, val, overridden: c.auto && ov!==undefined && ov!==null && s && ov!==s.v};
+  });
+}
+function robotType(){
+  const def = FAMILY[famKey()], cr = criteria();
+  if(cr.some(c=>c.val===false)) return def.high;
+  if(cr.every(c=>c.val===true)) return def.low;
+  return null;
+}
+function plFor(fnId, type, forbidden){
+  const row = TABLE1[fnId]; if(!row||!type) return null;
+  const f = row.fn && row.fn[type];
+  if(forbidden && f && f.forbidden) return {pl:f.forbidden, note:L(`footnote ${f.n} applied (forbidden area avoidance)`,`footnote ${f.n} 적용 (forbidden area avoidance)`)};
+  return {pl:row.v[type], note: f ? L(`footnote ${f.n}: engineer check`,`footnote ${f.n}: 엔지니어 확인 필요`) : ''};
+}
+const plBadge = pl => !pl ? '<span class="pl na">—</span>' : pl==='N/A' ? '<span class="pl na">N/A</span>' : `<span class="pl ${pl}" aria-label="PL ${pl}">${pl}</span>`;
+
+/* ---------- Step 1 ---------- */
+function renderChecks(id, list, obj, key){
+  $(id).innerHTML = list.map(([k,l,lk])=>`<label><input type="checkbox" id="${key}-${k}" data-k="${k}" ${obj[k]?'checked':''}>${esc(LANG==='ko'&&lk?lk:l)}${S.ai[key+'.'+k]?' <span class="ai-tag">AI draft</span>':''}</label>`).join('');
+  $(id).querySelectorAll('input').forEach(el=>el.onchange=()=>{ obj[el.dataset.k]=el.checked; delete S.ai[key+'.'+el.dataset.k]; changed(); });
+}
+function aiTag(field){ return S.ai[field] ? '<span class="ai-tag">AI draft</span>' : ''; }
+function fillForm(){
+  const set=(id,v)=>{ $(id).value = v ?? ''; };
+  set('f-name',S.name); set('f-family',S.family); set('f-restraint',S.restraint);
+  set('f-height',S.heightMm); set('f-mass',S.massKg); set('f-speed',S.maxSpeedMs);
+  set('f-manip',S.manipulator?'yes':'no'); set('f-env',S.env);
+  $('restraintField').hidden = S.family!=='physicalAssistant';
+  [['f-name','name','Robot name','로봇 이름'],['f-height','heightMm','Height','높이'],['f-mass','massKg','Mass','무게'],['f-speed','maxSpeedMs','Maximum speed','최고 속도'],['f-manip','manipulator','Manipulator (arm)','Manipulator (팔)'],['f-env','env','Environment','사용 환경'],['f-family','family','ISO 13482 robot family','ISO 13482 로봇 분류']].forEach(([id,k,l,lk])=>{
+    document.querySelector(`label[for="${id}"]`).innerHTML = esc(L(l,lk))+' '+aiTag(k);
+  });
+  renderChecks('f-users',USERS,S.users,'users');
+  renderChecks('f-sensors',SENSORS,S.sensors,'sensors');
+  renderChecks('f-markets',MARKETS,S.markets,'markets');
+  $('exampleChip').hidden = !S.isExample;
+}
+function bindForm(){
+  const num = v => v==='' ? '' : +v;
+  const on=(id,fn)=>$(id).addEventListener('input',e=>{ fn(e.target.value); changed(true); });
+  on('f-name',v=>{S.name=v;delete S.ai.name;});
+  on('f-height',v=>{S.heightMm=num(v);delete S.ai.heightMm;delete S.overrides.small;});
+  on('f-mass',v=>{S.massKg=num(v);delete S.ai.massKg;delete S.overrides.lightweight;});
+  on('f-speed',v=>{S.maxSpeedMs=num(v);delete S.ai.maxSpeedMs;delete S.overrides.slow;});
+  on('f-env',v=>{S.env=v;delete S.ai.env;});
+  $('f-family').onchange=e=>{S.family=e.target.value;delete S.ai.family;S.flags={};changed();};
+  $('f-restraint').onchange=e=>{S.restraint=e.target.value;S.flags={};changed();};
+  $('f-manip').onchange=e=>{S.manipulator=e.target.value==='yes';delete S.ai.manipulator;delete S.overrides.noManipulator;changed();};
+  $('resetExample').onclick=()=>{ S=exampleState(); $('aiNotes').hidden=true; changed(); };
+}
+let lastType;
+function renderVerdict(){
+  const def = FAMILY[famKey()], cr = criteria(), t = robotType();
+  const rows = cr.map(c=>{
+    const yes = c.val===true, no = c.val===false;
+    const why = c.s ? `${esc(c.s.why)} <span class="src">ISO 13482 ${esc(c.s.src)}</span>` : `<span class="muted">${L('Manufacturer decision. Confirm with the engineer.','제조사가 판단할 항목입니다. 엔지니어와 확인하세요.')}</span>`;
+    return `<div class="crit-row">
+      <div><b>${esc(c.label)}</b> ${c.overridden?`<span class="override">${L('engineer override','엔지니어 수정')}</span>`:''}</div>
+      <div class="seg" role="group" aria-label="${esc(c.label)}">
+        <button type="button" class="yes" aria-pressed="${yes}" data-k="${c.k}" data-v="1">${L('Yes','예')}</button>
+        <button type="button" class="no" aria-pressed="${no}" data-k="${c.k}" data-v="0">${L('No','아니요')}</button>
+      </div>
+      <div class="why">${why}</div></div>`;
+  }).join('');
+  const rule = L(`Type ${def.low} only when every criterion is yes; any no gives Type ${def.high}.`, `모든 기준이 '예'일 때만 Type ${def.low}이고, 하나라도 '아니요'면 Type ${def.high}입니다.`);
+  const tbl = t ? `<div class="tbl-wrap"><table><thead><tr><th>Safety function</th><th>${L('Clause','조항')}</th><th>PLr</th></tr></thead><tbody>${
+    Object.entries(TABLE1).map(([id,r])=>{ const p=plFor(id,t,false); return `<tr><td>${esc(r.label)}${p.note?`<div class="src">${esc(p.note)}</div>`:''}</td><td class="mono">${esc(r.clause)}</td><td>${plBadge(p.pl)}</td></tr>`;}).join('')
+  }</tbody></table></div><p class="src">${L('ISO 13482:2014 6.1.3: these PLs apply unless a risk assessment under 6.1.4 justifies a different level.','ISO 13482:2014 6.1.3: 6.1.4에 따른 risk assessment로 다른 수준이 정당화되지 않는 한 이 PL이 적용됩니다.')}</p>` : '';
+  $('verdict').innerHTML = `
+    <div class="row" style="justify-content:space-between"><div class="eyebrow">Robot type · ISO 13482 ${esc(def.clause)}</div><span class="review">${L('Engineer review required','엔지니어 검토 필요')}</span></div>
+    <div class="type-badge"><div class="big ${t?'':'pending'}">${t?esc(t):'Type ?'}</div>
+      <div><h3>${t?`Type ${esc(t)}`:L('Not classified yet','아직 분류 전')}</h3><p class="muted" style="font-size:13.5px">${esc(rule)}</p></div></div>
+    <div class="crit">${rows}</div>
+    ${t?`<h3>${L('Required PL for this type','이 Type의 Required PL')}</h3>${tbl}`:`<p class="muted">${L('Answer every criterion to see the required PL per safety function.','모든 기준에 답하면 safety function별 Required PL이 나옵니다.')}</p>`}`;
+  $('verdict').querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k, v=b.dataset.v==='1', c=cr.find(x=>x.k===k);
+    if(c.auto) S.overrides[k]=v; else S.flags[k]=v;
+    changed();
+  });
+  if(t!==lastType){ const big=$('verdict').querySelector('.big'); if(big && lastType!==undefined) big.classList.add('flash'); lastType=t; }
+}
+
+/* ---------- Claude: fill the form ---------- */
+let sampleFn = null, aiCtl = null, aiOn = false;
+const AI_ERR_KO = {
+  not_granted:'이 페이지에서 Claude 사용이 허용되지 않았습니다. 입력란은 직접 채울 수 있습니다.',
+  rate_limited:'지금은 요청이 너무 많습니다. 1분 뒤에 다시 시도하세요.',
+  session_expired:'claude.ai에 다시 로그인한 뒤 시도하세요.',
+  invalid_json:'Claude가 쓸 수 있는 답을 주지 못했습니다. 다시 시도하거나 설명을 줄여 보세요.',
+  refused:'Claude가 이 설명을 처리하지 않았습니다. 표현을 바꿔 다시 시도하세요.',
+  prompt_too_large:'설명이 너무 깁니다. 줄여서 다시 시도하세요.'
+};
+const aiErr = e => (LANG==='ko'?AI_ERR_KO:AI_ERR)[e&&e.code] || L('Something went wrong while asking Claude. Try again.','Claude에게 요청하는 중 문제가 생겼습니다. 다시 시도하세요.');
+const AI_ERR = {
+  not_granted:'Claude was not allowed for this page. You can still fill the form by hand.',
+  rate_limited:'Too many requests right now. Try again in a minute.',
+  session_expired:'Sign in to claude.ai again, then retry.',
+  invalid_json:'Claude did not return a usable answer. Try again or shorten the description.',
+  refused:'Claude declined this description. Rephrase it and try again.',
+  prompt_too_large:'The description is too long. Shorten it and try again.'
+};
+function buildPrompt(text){
+  return `You extract the specification of a robot for a functional-safety engineering tool based on ISO 13482:2014.
+Read the description and reply with ONLY one JSON object with exactly these keys:
+{"name": string|null,
+ "family": "mobileServant"|"physicalAssistant"|"personCarrier"|null,
+ "restraint": "restraint"|"restraintFree"|null,
+ "heightMm": number|null, "massKg": number|null, "maxSpeedMs": number|null,
+ "manipulator": boolean|null,
+ "env": string|null,
+ "users": {"public": boolean, "children": boolean, "elderly": boolean, "impaired": boolean, "trained": boolean},
+ "sensors": {"scanner": boolean, "bumper": boolean, "cliff": boolean, "camera": boolean, "safeDrive": boolean},
+ "markets": {"EU": boolean, "US": boolean},
+ "notes": string}
+Rules: convert units (km/h to m/s, cm or m to mm, lb to kg). Use null when a value is not stated; never guess numbers. A customer service, guide, reception or delivery robot is a mobileServant. "camera" means a non-safety vision sensor. In "notes", list in one or two short sentences what was missing or assumed. If the text is not about a robot, set every value to null and explain in notes.${LANG==='ko'?' Write "notes" and "env" in natural Korean, keeping standard terms in English.':''}
+
+Description:
+"""${text}"""`;
+}
+async function aiFill(){
+  const text = $('aiText').value.trim();
+  if(!text){ $('aiStatus').textContent=L('Write a short description first.','먼저 짧은 설명을 써 주세요.'); return; }
+  if(!sampleFn || !aiOn) return;
+  aiCtl = new AbortController();
+  $('aiFill').disabled=true; $('aiStop').hidden=false; $('aiStatus').textContent=L('Claude is reading the description…','Claude가 설명을 읽는 중입니다…'); $('aiNotes').hidden=true;
+  try{
+    const r = await sampleFn.json(buildPrompt(text), {modelTier:'quick', signal:aiCtl.signal});
+    applyAi(r||{});
+    $('aiStatus').textContent=L('Form filled. Fields marked AI draft need your check.','입력란을 채웠습니다. AI draft 표시가 있는 항목은 확인해 주세요.');
+  }catch(e){
+    $('aiStatus').textContent = e && e.code==='cancelled' ? L('Stopped.','중지했습니다.') : aiErr(e);
+    if(e && (e.code==='not_granted'||e.code==='sampling_disabled')) $('aiFill').hidden=true;
+  }finally{ $('aiFill').disabled=false; $('aiStop').hidden=true; }
+}
+function applyAi(r){
+  const ai = {};
+  const take=(k,ok)=>{ if(r[k]!==null && r[k]!==undefined && ok(r[k])){ S[k]=r[k]; ai[k]=1; } };
+  take('name',v=>typeof v==='string'&&v.trim()); take('family',v=>FAMILY[v]||v==='physicalAssistant');
+  take('restraint',v=>v==='restraint'||v==='restraintFree');
+  take('heightMm',v=>typeof v==='number'&&v>=0); take('massKg',v=>typeof v==='number'&&v>=0); take('maxSpeedMs',v=>typeof v==='number'&&v>=0);
+  take('manipulator',v=>typeof v==='boolean'); take('env',v=>typeof v==='string'&&v.trim());
+  ['users','sensors','markets'].forEach(g=>{ if(r[g]&&typeof r[g]==='object') Object.keys(S[g]).forEach(k=>{ S[g][k] = r[g][k]===true; ai[g+'.'+k]=1; }); });
+  ['heightMm','massKg','maxSpeedMs'].forEach(k=>{ if(!ai[k]) S[k]=''; });
+  S.ai = ai; S.overrides = {}; S.flags = {}; S.isExample = false; S.draft = null;
+  if(r.notes){ $('aiNotes').hidden=false; $('aiNotes').innerHTML = `<b>${L('Claude’s notes:','Claude 메모:')}</b> `+esc(r.notes); }
+  changed();
+}
+
+/* ---------- Step 2 ---------- */
+let MKT = 'EU';
+function standards(){
+  const t = robotType(), sn = S.sensors, list = [];
+  const add=(id,title,role,why,basis)=>list.push({id,title,role,why,basis});
+  add('Regulation (EU) 2023/1230','Machinery Regulation','Legal',L('The robot is machinery placed on the EU market. Applies from 20 January 2027 and replaces Directive 2006/42/EC.','이 로봇은 EU 시장에 출시되는 기계입니다. 2027년 1월 20일부터 적용되며 Directive 2006/42/EC를 대체합니다.'),'Annex III essential health and safety requirements');
+  add('ISO 12100:2010','Risk assessment and risk reduction','Type-A',L('Every machine needs a documented risk assessment.','모든 기계에는 문서화된 risk assessment가 필요합니다.'),'ISO 13482 4.1');
+  add('ISO 13482:2014','Safety requirements for personal care robots','Type-C',(fam=>L(`The robot is a ${fam}${t?` (Type ${t})`:''}. Sets the PLr of each safety function.`, `이 로봇은 ${fam}${t?` (Type ${t})`:''}입니다. 각 safety function의 PLr을 정합니다.`))(S.family==='mobileServant'?'mobile servant robot':S.family==='personCarrier'?'person carrier robot':'physical assistant robot'),'1 Scope; 6.1.2; Table 1');
+  add('ISO 13849-1:2023','Safety-related parts of control systems: design','Type-B1',L('Safety functions are implemented in the control system. IEC 62061 is the alternative route.','Safety function은 제어 시스템에 구현됩니다. IEC 62061이 대안 경로입니다.'),'ISO 13482 6.1.1');
+  add('ISO 13849-2:2012','Safety-related parts of control systems: validation','Type-B1',L('Validation of the achieved PL of each safety function.','각 safety function이 달성한 PL을 validation합니다.'),'ISO 13482 6.1.1 (verification and validation)');
+  add('IEC 60204-1','Electrical equipment of machines','Type-B2',L('Stop categories 0, 1 and 2 for emergency and protective stops.','Emergency stop과 protective stop에 쓰는 stop category 0, 1, 2를 정합니다.'),'ISO 13482 6.2.2, Table 2');
+  add('ISO 13850:2015','Emergency stop function','Type-B2',L('The robot has a manually initiated emergency stop.','로봇에 수동으로 작동하는 emergency stop이 있습니다.'),'ISO 13482 6.2.2.2');
+  if(sn.scanner){
+    add('IEC 61496-1 / IEC 61496-3','Electro-sensitive protective equipment (laser scanner)','Type-B2',L('A safety laser scanner detects persons.','Safety laser scanner로 사람을 감지합니다.'),'ISO 13482 6.5.2.1 a)');
+    add('ISO 13855','Positioning of safeguards with respect to approach speed','Type-B1',L('Minimum distance of the scanner protective field.','스캐너 protective field의 최소 거리를 정합니다.'),'ISO 13482 5.10.8.3 a), 6.5.2.1');
+  }
+  if(sn.bumper) add('ISO 13856-3','Pressure-sensitive protective devices: bumpers','Type-B2',L('A bumper detects contact with persons.','Bumper로 사람과의 접촉을 감지합니다.'),'ISO 13482 6.5.2.2');
+  if(sn.safeDrive) add('IEC 61800-5-2','Adjustable speed drives: functional safety','Type-B2',L('Drive-level monitored standstill and speed limiting.','드라이브 단에서 monitored standstill과 속도 제한을 수행합니다.'),'ISO 13482 6.2.2.3 NOTE');
+  add('ISO 13857','Safety distances for upper and lower limbs','Type-B1',L('Wheels and other moving parts must be out of reach.','바퀴 같은 움직이는 부품에 손발이 닿지 않아야 합니다.'),'ISO 13482 5.13.1');
+  return list;
+}
+function renderStandards(){
+  if($('stdCount')) $('stdCount').textContent = standards().length;
+  if($('stdMarq')){ const ch = standards().map(x=>`<div class="mchip"><b>${esc(x.id)}</b><span>${esc(x.title)}</span><span class="role ${x.role==='Type-C'?'c':x.role==='Legal'?'legal':''}">${esc(x.role)}</span></div>`), half = Math.ceil(ch.length/2);
+    const row = (a,cls) => `<div class="marq-row ${cls}">${a.join('')}${a.join('')}</div>`;
+    $('stdMarq').innerHTML = row(ch.slice(0,half),'') + row(ch.slice(half),'rev'); }
+  const markets = MARKETS.filter(([k])=>S.markets[k]).map(([k])=>k);
+  if(!markets.includes(MKT)) MKT = markets[0] || 'EU';
+  $('mktTabs').innerHTML = MARKETS.map(([k,l])=>`<button type="button" class="btn ${MKT===k?'primary':''}" data-m="${k}" ${S.markets[k]?'':'disabled'}>${esc(l)}</button>`).join('') + (markets.length?'':`<span class="muted">${L('No market selected in step 1.','1단계에서 선택한 시장이 없습니다.')}</span>`);
+  $('mktTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{MKT=b.dataset.m;renderStandards();});
+  if(MKT==='US'){
+    $('stdBody').innerHTML = `<div class="sheet"><div class="row" style="justify-content:space-between"><h3>${L('United States: next release','미국: 다음 버전에서 제공')}</h3><span class="review">${L('Engineer review required','엔지니어 검토 필요')}</span></div>
+      <p>${L('This version supports the EU route under the Machinery Regulation. The US route for service robots is added only after a functional-safety engineer has reviewed it, so nothing unchecked is shown here.','이번 버전은 Machinery Regulation에 따른 EU 경로를 지원합니다. 서비스 로봇의 미국 경로는 기능안전 엔지니어의 검토를 거친 뒤에 추가하므로, 검토되지 않은 내용은 여기에 보여 주지 않습니다.')}</p></div>`;
+    return;
+  }
+  const rows = standards().map(s=>`<tr>
+    <td><b>${esc(s.id)}</b><div class="muted" style="font-size:12.5px">${esc(s.title)}</div></td>
+    <td><span class="role ${s.role==='Legal'?'legal':s.role==='Type-C'?'c':''}">${esc(s.role)}</span></td>
+    <td>${esc(s.why)}</td>
+    <td class="mono">${esc(s.basis)}</td></tr>`).join('');
+  $('stdBody').innerHTML = `<div class="row" style="justify-content:space-between"><p class="muted">${L(`${standards().length} standards for <b>${esc(S.name||'this robot')}</b>, functional-safety scope only.`, `<b>${esc(S.name||'이 로봇')}</b>에 적용되는 규격 ${standards().length}개 (functional safety 범위만)`)}</p><span class="review">${L('Engineer review required','엔지니어 검토 필요')}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>${L('Standard','규격')}</th><th>${L('Role','구분')}</th><th>${L('Why it applies','적용 이유')}</th><th>${L('Basis','근거')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="notice">${L('Check the current harmonised status of each EN ISO / EN IEC edition before relying on presumption of conformity.','Presumption of conformity에 기대기 전에 각 EN ISO / EN IEC 판의 현재 harmonised 상태를 확인하세요.')}</div>`;
+}
+
+/* ---------- Step 3: hazards, safety functions, PLr ---------- */
+const RG = {S1F1P1:'a',S1F1P2:'b',S1F2P1:'b',S1F2P2:'c',S2F1P1:'c',S2F1P2:'d',S2F2P1:'d',S2F2P2:'e'};
+const RANK = {a:1,b:2,c:3,d:4,e:5};
+const T1IDS = Object.keys(TABLE1);
+function exampleSet(){
+  const decided = new Set(EXAMPLE.reviewLog.flatMap(r=>r.items));
+  const ko = LANG==='ko';
+  return ko ? koSet(baseSet(decided)) : baseSet(decided);
+}
+function koSet(set){
+  return {...set,
+    hazards: set.hazards.map(h=>({...h, ...(KX[h.id]||{})})),
+    safetyFunctions: set.safetyFunctions.map(f=>{ const k=KX[f.id]||{}; return {...f, name:k.name||f.name, trigger:k.trigger||f.trigger, riskGraph:{...f.riskGraph, rationale:k.rationale||f.riskGraph.rationale}}; }),
+    covered: set.covered.map((c,i)=>({...c, ...(KX.covered[i]||{})})),
+    outOfScope: set.outOfScope.map((o,i)=>({...o, ...(KX.outOfScope[i]||{})}))};
+}
+function baseSet(decided){
+  return {
+    hazards: EXAMPLE.hazards,
+    safetyFunctions: EXAMPLE.safetyFunctions.map(f=>({id:f.id,name:f.name,hazards:f.hazards,trigger:f.trigger,reaction:f.reaction,
+      table1Function:f.table1FunctionId, forbiddenArea:f.id==='SF6'||f.id==='SF7',
+      riskGraph:{S:f.riskGraphCrossCheck.S,F:f.riskGraphCrossCheck.F,P:f.riskGraphCrossCheck.P,rationale:f.riskGraphCrossCheck.note},
+      decided:decided.has(f.id)})),
+    covered: EXAMPLE.otherHazardsCovered, outOfScope: EXAMPLE.outOfScope||[], reviewed:true
+  };
+}
+function plr(sf,t){
+  const g = sf.riskGraph||{}, rg = RG[(g.S||'')+(g.F||'')+(g.P||'')] || null;
+  if(sf.table1Function && TABLE1[sf.table1Function] && t){
+    const p = plFor(sf.table1Function,t,sf.forbiddenArea);
+    if(p && p.pl && p.pl!=='N/A') return {pl:p.pl, src:`ISO 13482 ${TABLE1[sf.table1Function].clause}, Type ${t}`, rg, note:p.note,
+      higher: rg && RANK[rg]>RANK[p.pl]};
+  }
+  return {pl:rg, src:'ISO 13849-1:2023 Annex A risk graph', rg, note:'', higher:false};
+}
+function currentSet(){ return S.isExample ? exampleSet() : (S.draft || null); }
+
+function sfpSelect(sf,k,opts,editable){
+  const v = sf.riskGraph?.[k]||'';
+  if(!editable) return `<span class="mono">${esc(v)}</span>`;
+  return `<select class="sfp" data-sf="${esc(sf.id)}" data-k="${k}" aria-label="${k} for ${esc(sf.id)}">${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+}
+function setTables(set, t, editable){
+  const hz = set.hazards.map(h=>`<tr><td class="mono">${esc(h.id)}</td><td><b>${esc(h.title)}</b><div class="muted" style="font-size:12.5px">${esc(h.hazardousSituation)}${h.harm?` <i>${L('Harm:','피해:')}</i> ${esc(h.harm)}`:''}</div></td><td class="mono">${(h.annexA||[]).length?'No. '+h.annexA.join(', '):'—'}</td><td class="mono">${esc(h.clause||'')}</td><td class="mono">${(h.safetyFunctions||[]).map(esc).join(', ')}</td></tr>`).join('');
+  const sf = set.safetyFunctions.map(f=>{
+    const r = plr(f,t);
+    let status;
+    if(set.reviewed) status = t!=='1.2' ? `<span class="review">${L('Re-review','재검토 필요')}</span>` : f.decided ? `<span class="reviewed">${L('Engineer decision','엔지니어 결정')}</span>` : `<span class="reviewed">${L('Draft accepted','초안 채택')}</span>`;
+    else status = '<span class="review">AI draft</span>';
+    const flag = !set.reviewed && r.higher ? `<div class="flagnote">${L(`Risk graph gives ${r.rg}, above Table 1. Check ISO 13482 6.1.4.`,`Risk graph 결과가 ${r.rg}로 Table 1보다 높습니다. ISO 13482 6.1.4를 확인하세요.`)}</div>` : '';
+    return `<tr><td class="mono">${esc(f.id)}</td>
+      <td><b>${esc(f.name)}</b><div class="muted" style="font-size:12.5px">${esc(f.trigger||'')}</div>${f.riskGraph?.rationale?`<div class="src">${esc(f.riskGraph.rationale)}</div>`:''}${flag}</td>
+      <td>${plBadge(r.pl)}</td><td class="mono">${esc(r.src)}${r.note?`<div>${esc(r.note)}</div>`:''}</td>
+      <td class="nowrap">${sfpSelect(f,'S',['S1','S2'],editable)} ${sfpSelect(f,'F',['F1','F2'],editable)} ${sfpSelect(f,'P',['P1','P2'],editable)} <span class="mono">→ ${r.rg||'?'}</span></td>
+      <td>${status}${editable?` <button type="button" class="linkbtn" data-del="${esc(f.id)}">${L('Remove','삭제')}</button>`:''}</td></tr>`;
+  }).join('');
+  const covered = (set.covered||[]).map(o=>`<li>${esc(o.item)} <span class="src">Annex A No. ${(o.annexA||[]).join(', ')}</span>: ${esc(o.measure)}</li>`).join('');
+  const oos = (set.outOfScope||[]).map(o=>`<li>${esc(o.item)}: ${esc(o.reason)}</li>`).join('');
+  return `<h3>Hazards</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>${L('Hazard and situation','Hazard와 상황')}</th><th>Annex A</th><th>${L('Clause','조항')}</th><th>Safety functions</th></tr></thead><tbody>${hz}</tbody></table></div>
+    <h3>${L('Safety functions and PLr','Safety function과 PLr')}</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Safety function</th><th>PLr</th><th>${L('Source','근거')}</th><th>Risk graph (ISO 13849-1 Annex A)</th><th>${L('Status','상태')}</th></tr></thead><tbody>${sf}</tbody></table></div>
+    ${covered||oos?`<div class="sheet">${covered?`<h3>${L('Covered by design, not by a safety function','Safety function이 아니라 설계로 대응하는 항목')}</h3><ul class="plain">${covered}</ul>`:''}${oos?`<h3>${L('Out of scope','범위 밖')}</h3><ul class="plain">${oos}</ul>`:''}</div>`:''}`;
+}
+function compareHtml(draft,t){
+  const key = exampleSet().safetyFunctions;
+  const used = new Set(); let found=0, agree=0;
+  key.forEach(k=>{
+    const m = draft.safetyFunctions.find(d=>!used.has(d.id) && d.table1Function===k.table1Function && (!!d.forbiddenArea===!!k.forbiddenArea || k.table1Function!=='workspace'));
+    if(m){ used.add(m.id); found++; if(plr(m,t).pl===plr(k,t).pl) agree++; }
+  });
+  return `<div class="compare"><div><div class="eyebrow">${L("Claude's draft vs the engineer-reviewed answer key",'Claude 초안과 엔지니어가 검수한 정답지 비교')}</div>
+    <div class="cmp-nums"><span><b>${found}/${key.length}</b> ${L('safety functions found','safety function 찾음')}</span><span><b>${agree}/${found||0}</b> ${L('PLr in agreement','PLr 일치')}</span><span><b>${draft.safetyFunctions.length-used.size}</b> ${L('extra in the draft','초안에만 있음')}</span></div></div></div>`;
+}
+let aiCtl3 = null;
+function renderHazards(){
+  const t = robotType(), set = currentSet();
+  const canAi = !!sampleFn && aiOn;
+  const aiBar = `<div class="ai-box"><div class="row" style="justify-content:space-between">
+      <div><b>${S.isExample?L('Test Claude on this robot','이 로봇으로 Claude 테스트하기'):L('Draft the analysis with Claude','Claude로 분석 초안 만들기')}</b> <span class="ai-tag">Claude</span>
+      <p class="muted" style="font-size:13px">${S.isExample?L('Claude drafts the hazards and safety functions from step 1 alone, then the page scores the draft against the reviewed answer key.','Claude가 1단계 정보만으로 hazard와 safety function 초안을 쓰고, 페이지가 그 초안을 검수된 정답지와 비교해 채점합니다.'):L('Claude drafts hazards from ISO 13482 Annex A and the safety function for each. The page computes every PLr from Table 1 and the risk graph.','Claude가 ISO 13482 Annex A에서 hazard를 고르고 각각의 safety function 초안을 씁니다. PLr은 페이지가 Table 1과 risk graph로 직접 계산합니다.')}</p></div>
+      <div class="row"><button class="btn primary" id="hzAi" type="button" ${t?'':'disabled'}>${S.isExample?L('Run the test','테스트 실행'):L('Draft with Claude','Claude로 초안 만들기')}</button><button class="btn" id="hzStop" type="button" hidden>${L('Stop','중지')}</button></div></div>
+      <span class="ai-status" id="hzStatus" aria-live="polite">${t?'':L('Classify the robot type in step 1 first.','먼저 1단계에서 robot type을 분류하세요.')}</span></div>`;
+  let body = '';
+  if(S.isExample){
+    body = (t!=='1.2' ? `<div class="notice">${L(`The reviewed answer key is for Type 1.2. With Type ${esc(t||'?')} the Table 1 values below are recomputed and need a new review.`,`검수된 정답지는 Type 1.2 기준입니다. Type ${esc(t||'?')}에서는 아래 Table 1 값을 다시 계산하므로 새로 검토해야 합니다.`)}</div>` : '')
+      + `<div class="row" style="justify-content:space-between"><h3>${L('Engineer-reviewed answer key','엔지니어가 검수한 정답지')}</h3><span class="reviewed">${L('Reviewed by a functional-safety engineer','기능안전 엔지니어 검수 완료')}</span></div>`
+      + setTables(exampleSet(), t, false);
+    if(S.testDraft) body += `<hr class="sep">${compareHtml(S.testDraft,t)}<div class="row" style="justify-content:space-between"><h3>${L("Claude's draft",'Claude 초안')}</h3><span class="review">AI draft</span></div>${setTables(S.testDraft,t,false)}`;
+  } else if(set){
+    body = `<div class="row" style="justify-content:space-between"><h3>${L(`Draft for ${esc(S.name||'your robot')}`,`${esc(S.name||'내 로봇')} 초안`)}</h3><span class="review">${L('Engineer review required','엔지니어 검토 필요')}</span></div>
+      <p class="muted" style="font-size:13.5px">${L('Change S, F or P to apply your own judgment. PLr updates at once. Remove anything that does not apply.','S, F, P를 바꿔 직접 판단을 반영하세요. PLr은 바로 바뀝니다. 해당하지 않는 항목은 삭제하세요.')}</p>${setTables(set,t,true)}`;
+  } else {
+    body = `<div class="sheet coming"><h3>${L('No draft yet','아직 초안이 없습니다')}</h3><p class="muted">${canAi?L('Use the button above to draft hazards and safety functions for this robot.','위 버튼으로 이 로봇의 hazard와 safety function 초안을 만드세요.'):(sampleFn?L('You are in local mode, so nothing is sent anywhere. Turn on Claude drafting in step 1 to draft hazards, or reload the CS-1 example to see a complete, engineer-reviewed result.','로컬 모드라서 아무것도 전송되지 않습니다. hazard 초안이 필요하면 1단계에서 Claude 초안 기능을 켜고, 아니면 CS-1 예시를 다시 불러와 엔지니어가 검수한 전체 결과를 보세요.'):L('Claude is not available in this view. Reload the CS-1 example in step 1 to see a complete, engineer-reviewed result.','이 화면에서는 Claude를 쓸 수 없습니다. 1단계에서 CS-1 예시를 다시 불러오면 엔지니어가 검수한 전체 결과를 볼 수 있습니다.'))}</p></div>`;
+  }
+  $('hzBody').innerHTML = (canAi?aiBar:'') + body;
+  if(canAi && $('hzAi')){ $('hzAi').onclick = draftHazards; $('hzStop').onclick = ()=>aiCtl3 && aiCtl3.abort(); }
+  $('hzBody').querySelectorAll('select.sfp').forEach(el=>el.onchange=()=>{
+    const f = S.draft.safetyFunctions.find(x=>x.id===el.dataset.sf); f.riskGraph = {...(f.riskGraph||{}), [el.dataset.k]:el.value}; changed(true);
+  });
+  $('hzBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.del; S.draft.safetyFunctions = S.draft.safetyFunctions.filter(x=>x.id!==id);
+    S.draft.hazards.forEach(h=>h.safetyFunctions=(h.safetyFunctions||[]).filter(x=>x!==id)); changed(true);
+  });
+}
+function hazardPrompt(t){
+  const spec = {name:S.name, iso13482Family:S.family, physicalAssistantType:S.family==='physicalAssistant'?S.restraint:undefined, robotType:t,
+    heightMm:S.heightMm, massKg:S.massKg, maxSpeedMs:S.maxSpeedMs, manipulator:S.manipulator, environment:S.env,
+    personsNearby:Object.keys(S.users).filter(k=>S.users[k]), safetySensingAndDrives:Object.keys(S.sensors).filter(k=>S.sensors[k])};
+  const ex = exampleSet();
+  const style = {hazards: ex.hazards.slice(0,2).map(h=>({id:h.id,title:h.title,annexA:h.annexA,clause:h.clause,hazardousSituation:h.hazardousSituation,harm:h.harm,safetyFunctions:h.safetyFunctions})),
+    safetyFunctions: ex.safetyFunctions.filter(f=>['SF3','SF5'].includes(f.id)).map(f=>({id:f.id,name:f.name,hazards:f.hazards,table1Function:f.table1Function,forbiddenArea:f.forbiddenArea,trigger:f.trigger,reaction:f.reaction,riskGraph:{S:f.riskGraph.S,F:f.riskGraph.F,P:f.riskGraph.P,rationale:'one sentence'}}))};
+  return `You are a functional-safety engineer drafting the hazard analysis of a personal care robot under ISO 13482:2014, for a qualified engineer to review.
+
+Robot (from the user's form):
+${JSON.stringify(spec)}
+
+Reply with ONLY one JSON object:
+{"hazards":[{"id":"H1","title":string,"annexA":[numbers of items in ISO 13482:2014 Annex A Table A.1],"clause":"ISO 13482 clause numbers, e.g. 5.10.8","hazardousSituation":string,"harm":string,"safetyFunctions":["SF1"]}],
+ "safetyFunctions":[{"id":"SF1","name":string,"hazards":["H1"],"table1Function":"estop"|"pstop"|"workspace"|"speed"|"force"|"collision"|"stability"|null,"forbiddenArea":boolean,"trigger":string,"reaction":string,"riskGraph":{"S":"S1"|"S2","F":"F1"|"F2","P":"P1"|"P2","rationale":"one sentence"}}],
+ "covered":[{"annexA":[numbers],"item":string,"measure":"inherent design or information for use, with clause"}]}
+
+Rules:
+- 5 to 8 hazards, the significant ones for this robot, its environment and the persons nearby. Always include an emergency stop function.
+- A safety function is a control-system function only. Hazards handled by inherent design go in "covered".
+- Battery and charging hazards are out of scope: leave them out entirely.
+- table1Function maps the safety function to the ISO 13482 Table 1 row: estop 6.2.2.2, pstop 6.2.2.3, workspace 6.3 (incl. forbidden area avoidance and travel surface sensing 6.5.3, set forbiddenArea true for those), speed 6.4, force 6.7 (incl. bumper contact sensing), collision 6.5.2.1, stability 6.6. Use null only if no row fits.
+- Only use sensing and drives the robot has. If a needed one is missing, still propose the function and say what sensing it needs in "trigger".
+- Risk graph per ISO 13849-1:2023 Annex A, judged before this safety function acts but after other safety functions and inherent design. Choose P2 when untrained members of the public are exposed, unless you justify P1.
+- Cite clause numbers only. Do not quote standard text. Leave annexA empty if you are not sure of the item number.
+- Keep every string short: one sentence.${LANG==='ko'?`
+- Write every string value (title, hazardousSituation, harm, name, trigger, reaction, rationale, item, measure) in natural Korean. Keep standard terms in English: hazard, Safety Function, PLr, emergency stop, protective stop, risk graph, Type, Annex A, and clause numbers.`:''}
+
+Style example from a different, engineer-reviewed robot (format only, do not copy):
+${JSON.stringify(style)}`;
+}
+function cleanDraft(r){
+  if(!r || !Array.isArray(r.hazards) || !Array.isArray(r.safetyFunctions)) throw {code:'invalid_json'};
+  const str = v => typeof v==='string' ? v.slice(0,400) : '';
+  const nums = a => Array.isArray(a) ? a.filter(n=>Number.isInteger(n)&&n>=1&&n<=85).slice(0,6) : [];
+  const ids = a => Array.isArray(a) ? a.map(String).slice(0,8) : [];
+  const pick = (v,ok,d) => ok.includes(v) ? v : d;
+  const sfs = r.safetyFunctions.slice(0,12).map((f,i)=>({id:str(f.id)||('SF'+(i+1)),name:str(f.name),hazards:ids(f.hazards),
+    table1Function:T1IDS.includes(f.table1Function)?f.table1Function:null, forbiddenArea:!!f.forbiddenArea,
+    trigger:str(f.trigger), reaction:str(f.reaction),
+    riskGraph:{S:pick(f.riskGraph?.S,['S1','S2'],'S2'),F:pick(f.riskGraph?.F,['F1','F2'],'F2'),P:pick(f.riskGraph?.P,['P1','P2'],'P2'),rationale:str(f.riskGraph?.rationale)}}));
+  return {hazards:r.hazards.slice(0,10).map((h,i)=>({id:str(h.id)||('H'+(i+1)),title:str(h.title),annexA:nums(h.annexA),clause:str(h.clause),hazardousSituation:str(h.hazardousSituation),harm:str(h.harm),safetyFunctions:ids(h.safetyFunctions)})),
+    safetyFunctions:sfs, covered:Array.isArray(r.covered)?r.covered.slice(0,8).map(c=>({annexA:nums(c.annexA),item:str(c.item),measure:str(c.measure)})):[], outOfScope:[{annexA:[1,2,3,4],item:L('Battery and charging hazards','배터리와 충전 hazard'),reason:L('Handled by a separate battery functional-safety assessment.','별도의 배터리 functional safety 평가에서 다룹니다.')}], reviewed:false};
+}
+async function draftHazards(){
+  const t = robotType(); if(!t || !sampleFn || !aiOn) return;
+  aiCtl3 = new AbortController();
+  const btn=$('hzAi'), stop=$('hzStop'), st=$('hzStatus');
+  btn.disabled=true; stop.hidden=false; st.textContent=L('Claude is thinking. A full draft usually takes under a minute…','Claude가 생각하는 중입니다. 전체 초안은 보통 1분 안에 나옵니다…');
+  try{
+    const r = await sampleFn.json(hazardPrompt(t), {signal:aiCtl3.signal, onText:({text})=>{ st.textContent=L(`Claude is writing the draft (${text.length.toLocaleString()} characters)…`,`Claude가 초안을 쓰는 중입니다 (${text.length.toLocaleString()}자)…`); }});
+    const d = cleanDraft(r);
+    if(S.isExample) S.testDraft = d; else S.draft = d;
+    changed(true);
+    $('hzStatus').textContent = S.isExample ? L('Draft scored against the answer key below.','아래에서 초안을 정답지와 비교해 채점했습니다.') : L('Draft ready. Every row needs engineer review.','초안이 준비됐습니다. 모든 행은 엔지니어 검토가 필요합니다.');
+  }catch(e){
+    st.textContent = e && e.code==='cancelled' ? L('Stopped.','중지했습니다.') : aiErr(e);
+  }finally{ if($('hzAi')){ $('hzAi').disabled=false; $('hzStop').hidden=true; } }
+}
+
+/* ---------- Step 3: safety field simulator (illustration with demo values) ---------- */
+const SIM = {run:!matchMedia('(prefers-reduced-motion: reduce)').matches, raf:null, last:0, v:0, odo:0, state:'clear', hold:0, holdState:'', T:0.2, a:1.0, child:false, spawn:0.4, sweep:0,
+  peds:[{x:2.4,y:-2.2,vx:0,vy:1.1,r:0.25},{x:5.2,y:1.6,vx:-0.2,vy:-0.8,r:0.25},{x:7.4,y:-0.3,vx:-0.5,vy:0.2,r:0.25}]};
+const SIM_C = 0.1, SIM_R = 0.35, SIM_HALF = 0.5;
+const simVmax = () => Math.max(0.1, +S.maxSpeedMs || 1.0);
+const simDp = v => Math.max(0.25, v*SIM.T + v*v/(2*SIM.a) + SIM_C);
+const simDw = () => simDp(simVmax()) + simVmax()*0.8 + 0.3;
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rgba = (hex,a) => { const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+let COL = null;
+function simInit(){
+  $('simBox').innerHTML = `<div class="sheet">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="eyebrow">${L('Live safety field','실시간 safety field')} · ${esc(TABLE1.collision.label)} · ${esc(TABLE1.speed.label)} · Bumper</div>
+      <h3>${L('Safety field simulator','Safety field 시뮬레이터')}</h3>
+      <p class="muted" style="font-size:13px;max-width:62ch">${L('The robot drives at the maximum speed from step 1. A person in the warning field slows it down; a person in the protective field triggers a protective stop. Turn on the child to see why the bumper is needed.','1단계의 최고 속도로 주행합니다. warning field에 사람이 들어오면 감속하고, protective field에 들어오면 protective stop이 걸립니다. 어린이를 켜 보면 bumper가 왜 필요한지 보입니다.')}</p></div>
+      <div class="row"><button class="btn" id="simPlay" type="button"></button><button class="btn" id="simChild" type="button" aria-pressed="${SIM.child}">${L('Child below the scanner plane','스캐너 아래 어린이')}</button></div>
+    </div>
+    <div class="sim-grid">
+      <canvas class="sim-cv" id="simCv" role="img" aria-label="${L('Top view of the robot with its warning and protective fields','로봇 위에서 본 warning field와 protective field')}"></canvas>
+      <div class="sim-read">
+        <div class="sim-state ok" id="simState"></div>
+        <dl class="sim-kv">
+          <div><dt>${L('Speed','속도')}</dt><dd id="simV"></dd></div>
+          <div><dt>${L('Stopping distance','정지 거리')}</dt><dd id="simSd"></dd></div>
+          <div><dt>Protective field</dt><dd id="simDp"></dd></div>
+          <div><dt>Warning field</dt><dd id="simDw"></dd></div>
+          <div class="wide"><dt>${L('Safety function acting','작동 중인 safety function')}</dt><dd id="simSf"></dd></div>
+        </dl>
+        <label class="sim-sl" for="simT"><span>${L('Response time T','응답 시간 T')} <b id="simTv"></b></span><input type="range" id="simT" min="0.1" max="0.5" step="0.05" value="${SIM.T}"></label>
+        <label class="sim-sl" for="simA"><span>${L('Braking deceleration a','제동 감속도 a')} <b id="simAv"></b></span><input type="range" id="simA" min="0.5" max="2" step="0.1" value="${SIM.a}"></label>
+        <div class="notice" id="simNote" hidden></div>
+      </div>
+    </div>
+    <p class="src">${L('Protective field = v·T + v²/(2a) + C with C = 0.1 m; the warning field adds 0.8 s of travel. Illustration with demo values: calculate the real minimum distance per ISO 13855 and ISO 13482 6.5.2.1.','Protective field = v·T + v²/(2a) + C (C = 0.1 m), warning field는 0.8초 주행 거리를 더합니다. 데모 값으로 그린 예시이며, 실제 최소 거리는 ISO 13855와 ISO 13482 6.5.2.1에 따라 계산해야 합니다.')}</p>
+  </div>`;
+  $('simPlay').onclick = ()=>{ SIM.run=!SIM.run; simLabels(); simKick(); };
+  $('simChild').onclick = ()=>{ SIM.child=!SIM.child; $('simChild').setAttribute('aria-pressed',SIM.child); if(!SIM.child) SIM.peds=SIM.peds.filter(p=>!p.child); else simAddChild(); simOnce(); };
+  $('simT').oninput = e=>{ SIM.T=+e.target.value; simOnce(); };
+  $('simA').oninput = e=>{ SIM.a=+e.target.value; simOnce(); };
+  simLabels(); simOnce();
+}
+function simLabels(){ if($('simPlay')) $('simPlay').textContent = SIM.run ? L('Pause','일시 정지') : L('Play','재생'); }
+function simAddChild(){ SIM.peds.push({x:6.5, y:(Math.random()-.5)*0.2, vx:-0.35, vy:0, r:0.16, child:true}); }
+function simStep(dt){
+  const vmax=simVmax(), sc=S.sensors.scanner, bp=S.sensors.bumper;
+  if(SIM.v>vmax) SIM.v=vmax;
+  SIM.sweep += dt*4;
+  SIM.spawn -= dt;
+  if(SIM.spawn<=0 && SIM.peds.filter(p=>!p.child).length<5){
+    SIM.spawn = 1.1 + Math.random()*1.6; const side = Math.random()<.5?-1:1, sp = Math.random()<.35?0.8:1.3;
+    SIM.peds.push({x:1.5+Math.random()*7, y:side*(2.8+Math.random()*0.8), vx:(Math.random()-.5)*0.5, vy:-side*sp, r:0.25});
+  }
+  if(SIM.child && !SIM.peds.some(p=>p.child)) simAddChild();
+  SIM.peds.forEach(p=>{ p.x += (p.vx - SIM.v)*dt; p.y += p.vy*dt; });
+  SIM.peds = SIM.peds.filter(p=>p.x>-4.5 && p.x<12 && Math.abs(p.y)<5);
+  const dw = simDw(), dp = simDp(SIM.v);
+  const inRect = (p,len) => p.x + p.r > 0 && p.x - p.r < SIM_R + len && Math.abs(p.y) - p.r < SIM_HALF;
+  let target = vmax, st = 'clear';
+  SIM.peds.forEach(p=>{ p.zone = (!sc || p.child) ? '' : inRect(p,dp) ? 'p' : inRect(p,dw) ? 'w' : ''; });
+  if(SIM.peds.some(p=>p.zone==='w')){ target = Math.min(vmax,0.5); st = 'slow'; }
+  if(SIM.peds.some(p=>p.zone==='p')){ target = 0; st = 'stop'; }
+  const touch = SIM.peds.filter(p=>Math.hypot(p.x,p.y) < SIM_R + p.r);
+  if(touch.length){ touch.forEach(p=>{ p.vx=0; p.vy=(p.y>=0?1:-1)*(p.child?0.7:1.0); p.hit=1; }); SIM.hold=1.6; SIM.holdState = bp ? 'bumper' : 'contact'; }
+  if(SIM.hold>0){ SIM.hold-=dt; st = SIM.holdState; if(SIM.holdState==='bumper') target=0; }
+  SIM.state = st;
+  if(SIM.v>target) SIM.v = Math.max(target, SIM.v - SIM.a*dt); else SIM.v = Math.min(target, SIM.v + 0.5*dt);
+  SIM.odo += SIM.v*dt;
+}
+function rr(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function simDraw(){
+  const cv=$('simCv'); if(!cv) return; const W=cv.clientWidth, H=cv.clientHeight; if(!W) return;
+  if(!COL) COL = {sig:cssv('--signal'), red:cssv('--pl-d'), ok:cssv('--ok'), warn:cssv('--warn'), ink:cssv('--ink'), ink2:cssv('--ink-2')};
+  const dpr = devicePixelRatio||1;
+  if(cv.width!==Math.round(W*dpr) || cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const k = Math.min(W/10.5, H/6.4), ox = Math.max(W*0.18, 70), oy = H/2, X = x=>ox+x*k, Y = y=>oy+y*k;
+  g.strokeStyle = 'rgba(230,210,170,.06)'; g.lineWidth = 1; const step = 0.5*k, off = -((SIM.odo*k)%step);
+  for(let x=off; x<W; x+=step){ g.beginPath(); g.moveTo(Math.round(x)+.5,0); g.lineTo(Math.round(x)+.5,H); g.stroke(); }
+  for(let y=oy%step; y<H; y+=step){ g.beginPath(); g.moveTo(0,Math.round(y)+.5); g.lineTo(W,Math.round(y)+.5); g.stroke(); }
+  const sc = S.sensors.scanner, dw = simDw(), dp = simDp(SIM.v);
+  g.font = '500 11px "IBM Plex Mono", ui-monospace, monospace';
+  if(sc){
+    const fx = X(0), fy = Y(-SIM_HALF), fh = 2*SIM_HALF*k;
+    rr(g,fx,fy,(SIM_R+dw)*k,fh,8); g.fillStyle = rgba(COL.sig, SIM.state==='slow'?.14:.06); g.fill(); g.setLineDash([5,4]); g.strokeStyle = rgba(COL.sig,.7); g.stroke(); g.setLineDash([]);
+    rr(g,fx,fy,(SIM_R+dp)*k,fh,8); g.fillStyle = rgba(COL.red, SIM.state==='stop'?(.22+.12*Math.sin(SIM.sweep*3)):.12); g.fill(); g.strokeStyle = rgba(COL.red,.85); g.stroke();
+    const ang = Math.sin(SIM.sweep)*1.15, rad = (SIM_R+dw)*k;
+    for(let i=0;i<14;i++){ const a0 = ang - i*0.035*Math.sign(Math.cos(SIM.sweep)||1); g.beginPath(); g.moveTo(X(0),Y(0)); g.arc(X(0),Y(0),rad,a0-0.035,a0); g.closePath(); g.fillStyle = rgba(COL.sig, .16*(1-i/14)); g.fill(); }
+    g.fillStyle = rgba(COL.sig,.95); g.fillText(`WARNING ${dw.toFixed(2)} m`, fx+(SIM_R+0.1)*k, fy-7);
+    g.fillStyle = rgba(COL.red,.95); g.fillText(`PROTECTIVE ${dp.toFixed(2)} m`, fx+(SIM_R+0.1)*k, fy+fh+15);
+  }
+  SIM.peds.forEach(p=>{
+    const c = p.zone==='p' ? COL.red : p.zone==='w' ? COL.sig : p.child ? COL.warn : COL.ink2;
+    g.beginPath(); g.arc(X(p.x),Y(p.y),p.r*k,0,Math.PI*2); g.fillStyle = rgba(c, p.child?.18:.28); g.fill();
+    if(p.child) g.setLineDash([3,3]); g.strokeStyle = c; g.lineWidth = 1.5; g.stroke(); g.setLineDash([]); g.lineWidth = 1;
+    if(p.child){ g.fillStyle = COL.warn; g.fillText(L('child','어린이'), X(p.x)-12, Y(p.y)-p.r*k-6); }
+  });
+  const hit = SIM.state==='bumper' || SIM.state==='contact';
+  g.save(); g.shadowColor = rgba(SIM.state==='stop'?COL.red:COL.sig,.6); g.shadowBlur = 18;
+  g.beginPath(); g.arc(X(0),Y(0),SIM_R*k,0,Math.PI*2); g.fillStyle = '#1C1F23'; g.fill(); g.restore();
+  g.beginPath(); g.arc(X(0),Y(0),SIM_R*k,0,Math.PI*2); g.lineWidth = S.sensors.bumper?3:1.5; g.strokeStyle = hit ? (SIM.state==='bumper'?COL.warn:COL.red) : (S.sensors.bumper?rgba(COL.ok,.8):COL.ink2); g.stroke(); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(X(SIM_R*0.25),Y(-SIM_R*0.4)); g.lineTo(X(SIM_R*0.8),Y(0)); g.lineTo(X(SIM_R*0.25),Y(SIM_R*0.4)); g.strokeStyle = COL.ink; g.stroke();
+  g.fillStyle = COL.ink2; g.fillText('CS-1'===(S.name||'').slice(0,4)?'CS-1':L('robot','로봇'), X(-SIM_R)-2, Y(SIM_R)+16);
+}
+function simRead(){
+  if(!$('simState')) return;
+  const M = {
+    clear:[L('Normal travel','정상 주행'),'ok','—'],
+    slow:[L('Reduced speed: person in the warning field','감속: warning field에 사람이 있음'),'sig',TABLE1.speed.label],
+    stop:[L('Protective stop: person in the protective field','Protective stop: protective field에 사람이 있음'),'red',`${TABLE1.collision.label} → ${TABLE1.pstop.label}`],
+    bumper:[L('Bumper contact: protective stop','Bumper 접촉: protective stop'),'warn',`${TABLE1.force.label} → ${TABLE1.pstop.label}`],
+    contact:[L('Contact, and nothing stops the robot','접촉 발생: 로봇을 멈출 safety function 없음'),'red','—']}[SIM.state];
+  const el = $('simState'); if(el.dataset.s!==SIM.state+LANG){ el.dataset.s=SIM.state+LANG; el.textContent=M[0]; el.className='sim-state '+M[1]; $('simSf').textContent=M[2]; }
+  const sd = SIM.v*SIM.T + SIM.v*SIM.v/(2*SIM.a);
+  $('simV').textContent = `${SIM.v.toFixed(2)} / ${simVmax().toFixed(2)} m/s`;
+  $('simSd').textContent = `${sd.toFixed(2)} m`;
+  $('simDp').textContent = S.sensors.scanner ? `${simDp(SIM.v).toFixed(2)} m` : '—';
+  $('simDw').textContent = S.sensors.scanner ? `${simDw().toFixed(2)} m` : '—';
+  $('simTv').textContent = `${SIM.T.toFixed(2)} s`; $('simAv').textContent = `${SIM.a.toFixed(1)} m/s²`;
+  const note = !S.sensors.scanner ? L('No safety laser scanner in step 1, so there are no fields: only contact sensing can stop the robot.','1단계에 safety laser scanner가 없어서 field가 없습니다. 접촉 감지만 로봇을 멈출 수 있습니다.') : !S.sensors.bumper ? L('No bumper in step 1: a child below the scanner plane is not detected at all.','1단계에 bumper가 없어서 스캐너 아래의 어린이는 전혀 감지되지 않습니다.') : '';
+  const n = $('simNote'); if(n.textContent!==note){ n.textContent=note; n.hidden=!note; }
+}
+function simOnce(){ if(!SIM.raf){ simStep(0); simDraw(); simRead(); } }
+function simFrame(ts){
+  if(!SIM.run || $('hazards').hidden || $('appView').hidden || !$('simCv')){ SIM.raf=null; return; }
+  const dt = Math.min(0.05, SIM.last ? (ts-SIM.last)/1000 : 0); SIM.last = ts;
+  simStep(dt); simDraw(); simRead();
+  SIM.raf = requestAnimationFrame(simFrame);
+}
+function simKick(){ if(SIM.run && !SIM.raf && !$('hazards').hidden && !$('appView').hidden){ SIM.last=0; SIM.raf=requestAnimationFrame(simFrame); } else simOnce(); }
+
+/* ---------- Step 4: Traceability ---------- */
+let TRM = null, TR_SEL = null, TR_HOVER = null;
+function traceModel(){
+  const set = currentSet(); if(!set) return null;
+  const t = robotType(), stds = standards(), sn = S.sensors;
+  const byFn = {estop:['ISO 13850:2015','IEC 60204-1'], pstop:['IEC 60204-1','IEC 61800-5-2'], collision:['IEC 61496-1 / IEC 61496-3','ISO 13855'], speed:['IEC 61800-5-2'], force:['ISO 13856-3'], workspace:[], stability:[]};
+  const sfs = set.safetyFunctions.map(f=>({...f, r:plr(f,t), stds:['ISO 13482:2014','ISO 13849-1:2023',...(byFn[f.table1Function]||[])].filter(id=>stds.some(s=>s.id===id))}));
+  const hz = set.hazards.map(h=>({...h, sfs:[...new Set([...(h.safetyFunctions||[]), ...sfs.filter(f=>(f.hazards||[]).includes(h.id)).map(f=>f.id)])].filter(id=>sfs.some(f=>f.id===id))}));
+  const used = new Set(sfs.flatMap(f=>f.stds));
+  const st = stds.filter(s=>used.has(s.id));
+  const edges = [...hz.flatMap(h=>h.sfs.map(id=>['h:'+h.id,'f:'+id])), ...sfs.flatMap(f=>f.stds.map(id=>['f:'+f.id,'s:'+id]))];
+  return {hz, sfs, st, edges};
+}
+function renderTrace(){
+  TRM = traceModel(); const box = $('trBody');
+  if(!TRM){ box.innerHTML = `<div class="sheet coming"><h3>${L('No analysis yet','아직 분석이 없습니다')}</h3><p class="muted">${L('Draft the hazards in step 3 first. The map then links every hazard to its safety functions and standards.','먼저 3단계에서 hazard 초안을 만드세요. 그러면 이 맵이 모든 hazard를 safety function과 규격에 연결합니다.')}</p></div>`; return; }
+  if(TR_SEL && ![...TRM.hz.map(h=>'h:'+h.id),...TRM.sfs.map(f=>'f:'+f.id),...TRM.st.map(s=>'s:'+s.id)].includes(TR_SEL)) TR_SEL=null;
+  const unc = TRM.hz.filter(h=>!h.sfs.length);
+  const node = (key,cls,inner) => `<button type="button" class="tr-node ${cls}" data-key="${esc(key)}" aria-pressed="false">${inner}</button>`;
+  box.innerHTML = `<div class="tr-sum">
+      <div><span class="big-n">${TRM.hz.length}</span><span>hazards</span></div>
+      <div><span class="big-n">${TRM.sfs.length}</span><span>safety functions</span></div>
+      <div><span class="big-n">${TRM.st.length}</span><span>${L('standards','규격')}</span></div>
+      <div class="tr-cov ${unc.length?'bad':'good'}">${unc.length?L(`${unc.length} hazard(s) have no safety function: ${unc.map(h=>h.id).join(', ')}`,`safety function이 없는 hazard ${unc.length}개: ${unc.map(h=>h.id).join(', ')}`):L('Every hazard is covered by at least one safety function.','모든 hazard에 safety function이 하나 이상 연결되어 있습니다.')}</div>
+    </div>
+    <p class="muted" style="font-size:13.5px">${L('Hover over or tap any item to trace its chain. Assessors ask for exactly this traceability.','항목에 마우스를 올리거나 눌러서 연결 고리를 따라가 보세요. 기능안전 심사에서 요구하는 바로 그 traceability입니다.')}</p>
+    <div class="tr-scroll"><div class="tr-map" id="trMap"><svg class="tr-svg" id="trSvg" aria-hidden="true"></svg>
+      <div class="tr-col"><div class="eyebrow">Hazards</div>${TRM.hz.map(h=>node('h:'+h.id, h.sfs.length?'':'unc', `<span class="mono">${esc(h.id)}</span><span class="tr-t clamp">${esc(h.title)}</span><span></span>`)).join('')}</div>
+      <div class="tr-col"><div class="eyebrow">Safety functions · PLr</div>${TRM.sfs.map(f=>node('f:'+f.id,'',`<span class="mono">${esc(f.id)}</span><span class="tr-t clamp">${esc(f.name)}</span>${plBadge(f.r.pl)}`)).join('')}</div>
+      <div class="tr-col"><div class="eyebrow">${L('Standards','규격')}</div>${TRM.st.map(s=>node('s:'+s.id,'std',`<span class="tr-t"><b>${esc(s.id)}</b><span class="muted">${esc(s.title)}</span></span><span class="role ${s.role==='Type-C'?'c':''}">${esc(s.role)}</span>`)).join('')}</div>
+    </div></div>
+    <div class="sheet tr-detail" id="trDetail" aria-live="polite"></div>`;
+  box.querySelectorAll('.tr-node').forEach(n=>{
+    const k = n.dataset.key;
+    n.onpointerenter = ()=>{ TR_HOVER=k; traceHi(); }; n.onpointerleave = ()=>{ TR_HOVER=null; traceHi(); };
+    n.onfocus = ()=>{ TR_HOVER=k; traceHi(); }; n.onblur = ()=>{ TR_HOVER=null; traceHi(); };
+    n.onclick = ()=>{ TR_SEL = TR_SEL===k ? null : k; traceHi(); traceDetail(); };
+  });
+  traceDetail(); requestAnimationFrame(drawTrace);
+}
+function drawTrace(){
+  const map=$('trMap'), svg=$('trSvg'); if(!map || !map.offsetWidth || !TRM) return;
+  const R = map.getBoundingClientRect(), pos = {};
+  map.querySelectorAll('.tr-node').forEach(n=>{ const r=n.getBoundingClientRect(); pos[n.dataset.key] = {l:r.left-R.left, r:r.right-R.left, y:r.top-R.top+r.height/2}; });
+  svg.setAttribute('width',R.width); svg.setAttribute('height',R.height); svg.setAttribute('viewBox',`0 0 ${R.width} ${R.height}`);
+  svg.innerHTML = TRM.edges.map(([a,b],i)=>{ const p=pos[a], q=pos[b]; if(!p||!q) return ''; const x1=p.r, x2=q.l, dx=(x2-x1)*0.55;
+    return `<path data-i="${i}" d="M${x1.toFixed(1)},${p.y.toFixed(1)} C${(x1+dx).toFixed(1)},${p.y.toFixed(1)} ${(x2-dx).toFixed(1)},${q.y.toFixed(1)} ${x2.toFixed(1)},${q.y.toFixed(1)}"/>`; }).join('');
+  traceHi();
+}
+function traceChain(key){
+  const on = new Set([key]), E = TRM.edges;
+  if(key[0]==='h') E.filter(e=>e[0]===key).forEach(e=>{ on.add(e[1]); E.filter(x=>x[0]===e[1]).forEach(x=>on.add(x[1])); });
+  else if(key[0]==='f') E.forEach(e=>{ if(e[0]===key) on.add(e[1]); if(e[1]===key) on.add(e[0]); });
+  else E.filter(e=>e[1]===key).forEach(e=>{ on.add(e[0]); E.filter(x=>x[1]===e[0]).forEach(x=>on.add(x[0])); });
+  return on;
+}
+function traceHi(){
+  const map=$('trMap'); if(!map || !TRM) return;
+  const key = TR_HOVER || TR_SEL, on = key ? traceChain(key) : null;
+  map.classList.toggle('focus', !!on);
+  map.querySelectorAll('.tr-node').forEach(n=>{ n.classList.toggle('on', !!on && on.has(n.dataset.key)); n.setAttribute('aria-pressed', n.dataset.key===TR_SEL); });
+  map.querySelectorAll('.tr-svg path').forEach(p=>{ const [a,b]=TRM.edges[+p.dataset.i]; p.classList.toggle('on', !!on && on.has(a) && on.has(b) && (a===key || b===key || key[0]!=='f')); });
+}
+function traceDetail(){
+  const el=$('trDetail'); if(!el) return;
+  if(!TR_SEL){ el.innerHTML = `<p class="muted">${L('Select an item to see its details and links here.','항목을 선택하면 상세 내용과 연결이 여기에 나옵니다.')}</p>`; return; }
+  const id = TR_SEL.slice(2), sfName = i=>{ const f=TRM.sfs.find(x=>x.id===i); return f?`${f.id} ${f.name}`:i; };
+  const chips = a => `<div class="chips">${a.map(x=>`<span class="role">${esc(x)}</span>`).join('')}</div>`;
+  if(TR_SEL[0]==='h'){ const h=TRM.hz.find(x=>x.id===id);
+    el.innerHTML = `<div class="eyebrow">Hazard ${esc(h.id)} · Annex A ${(h.annexA||[]).length?'No. '+h.annexA.join(', '):'—'} · ISO 13482 ${esc(h.clause||'')}</div><h3>${esc(h.title)}</h3><p>${esc(h.hazardousSituation||'')}</p>${h.harm?`<p class="muted"><i>${L('Harm:','피해:')}</i> ${esc(h.harm)}</p>`:''}<div class="eyebrow">${L('Covered by','대응 safety function')}</div>${chips(h.sfs.map(sfName))}`;
+  } else if(TR_SEL[0]==='f'){ const f=TRM.sfs.find(x=>x.id===id);
+    el.innerHTML = `<div class="row" style="justify-content:space-between"><div class="eyebrow">Safety function ${esc(f.id)}</div>${plBadge(f.r.pl)}</div><h3>${esc(f.name)}</h3><p>${esc(f.trigger||'')}</p><p class="src">PLr ${esc(f.r.pl||'?')} · ${esc(f.r.src)}</p><div class="eyebrow">Hazards</div>${chips((f.hazards||[]).length?f.hazards:TRM.hz.filter(h=>h.sfs.includes(f.id)).map(h=>h.id))}<div class="eyebrow">${L('Standards','규격')}</div>${chips(f.stds)}`;
+  } else { const s=TRM.st.find(x=>x.id===id);
+    el.innerHTML = `<div class="eyebrow">${esc(s.role)}</div><h3>${esc(s.id)}</h3><p class="muted">${esc(s.title)}</p><p>${esc(s.why)}</p><p class="src">${L('Basis','근거')}: ${esc(s.basis)}</p><div class="eyebrow">${L('Applied by','적용되는 safety function')}</div>${chips(TRM.sfs.filter(f=>f.stds.includes(s.id)).map(f=>`${f.id} ${f.name}`))}`;
+  }
+}
+addEventListener('resize', ()=>requestAnimationFrame(drawTrace));
+
+/* ---------- Step 5: Gap Report ---------- */
+function deliverables(){
+  const set = currentSet(), t = robotType(), sfs = set ? set.safetyFunctions : [];
+  const sfList = sfs.map(f=>{ const r=plr(f,t); return `${f.id} ${f.name} (PLr ${r.pl||'?'})`; });
+  const hasScanner = S.sensors.scanner, hasBumper = S.sensors.bumper;
+  const PH = {Define:'정의',Specify:'명세',Design:'설계',Verify:'검증',Document:'문서화'};
+  const items = [
+    {k:'scope', phase:'Define', title:L('Intended use, limits of use and robot type classification','Intended use, limits of use와 robot type 분류'), basis:'ISO 12100 5.3; ISO 13482 6.1.2', here: !!t},
+    {k:'ra', phase:'Define', title:L('Risk assessment: hazard identification, risk estimation and evaluation','Risk assessment: hazard 식별, risk 추정과 평가'), basis:'ISO 12100 Clause 5; ISO 13482 Clause 4 and Annex A', here: !!set},
+    {k:'srs', phase:'Specify', title:L('Safety requirements specification for each safety function','Safety function별 safety requirements specification'), basis:'ISO 13849-1:2023 5.2', detail:sfList},
+    {k:'plr', phase:'Specify', title:L('PLr determination for each safety function','Safety function별 PLr 결정'), basis:'ISO 13482 6.1.3, 6.1.4; ISO 13849-1:2023 5.3', here: sfs.length>0},
+    {k:'design', phase:'Design', title:L('SRP/CS architecture: Category, MTTFd, DCavg, CCF per safety function','Safety function별 SRP/CS 아키텍처: Category, MTTFd, DCavg, CCF'), basis:'ISO 13849-1:2023 Clause 6'},
+    {k:'pl', phase:'Design', title:L('Achieved PL calculation and PL ≥ PLr check per safety function','Safety function별 달성 PL 계산과 PL ≥ PLr 확인'), basis:'ISO 13849-1:2023'},
+    {k:'sw', phase:'Design', title:L('Safety-related software specification and verification','Safety-related software 명세와 검증'), basis:'ISO 13849-1:2023'},
+    hasScanner ? {k:'dist', phase:'Design', title:L('Protective field and minimum distance calculation, including braking distance','제동 거리를 포함한 protective field와 최소 거리 계산'), basis:'ISO 13855; ISO 13482 6.2.3, 6.5.2.1'} : null,
+    hasBumper ? {k:'bump', phase:'Design', title:L('Bumper actuation force and coverage, including child height','어린이 키까지 고려한 bumper 작동력과 감지 범위'), basis:'ISO 13856-3; ISO 13482 5.10.8.3 NOTE 3'} : null,
+    {k:'val', phase:'Verify', title:L('Verification and validation plan and report (methods A–H per hazard)','Verification·validation 계획과 보고서 (hazard별 방법 A–H)'), basis:'ISO 13849-2; ISO 13482 Clause 7'},
+    {k:'ifu', phase:'Document', title:L('Information for use: markings, user manual, service manual','Information for use: 표시, 사용자 매뉴얼, 서비스 매뉴얼'), basis:'ISO 13482 Clause 8'},
+    {k:'tf', phase:'Document', title:L('Technical documentation and EU declaration of conformity','기술 문서와 EU declaration of conformity'), basis:'Regulation (EU) 2023/1230', eu:true}
+  ].filter(Boolean).filter(i=>!i.eu || S.markets.EU).map(i=>({...i, phase:L(i.phase,PH[i.phase])}));
+  return items;
+}
+function renderReport(){
+  if(!S.have) S.have = {};
+  const items = deliverables(), t = robotType();
+  const done = items.filter(i=>S.have[i.k]).length, draft = items.filter(i=>!S.have[i.k] && i.here).length;
+  const missing = items.length - done - draft;
+  const phases = [...new Set(items.map(i=>i.phase))];
+  const rows = phases.map((ph,pi)=>{
+    const list = items.filter(i=>i.phase===ph).map(i=>{
+      const state = S.have[i.k] ? `<span class="st have">${L('In place','확보')}</span>` : i.here ? `<span class="st draft">${L('Draft from steps 1–3','1–3단계 초안 있음')}</span>` : `<span class="st miss">${L('Missing','없음')}</span>`;
+      return `<li class="gap-item"><label><input type="checkbox" id="have-${i.k}" data-k="${i.k}" ${S.have[i.k]?'checked':''}> <span><b>${esc(i.title)}</b><span class="src">${esc(i.basis)}</span>${i.detail&&i.detail.length?`<span class="muted" style="font-size:12.5px">${i.detail.map(esc).join(' · ')}</span>`:''}</span></label>${state}</li>`;
+    }).join('');
+    return `<div class="phase"><div class="phase-h"><span class="mono">Phase ${pi+1}</span><h3>${esc(ph)}</h3></div><ul class="gap-list">${list}</ul></div>`;
+  }).join('');
+  $('rpBody').innerHTML = `
+    <div class="gap-sum">
+      <div><span class="big-n">${missing}</span><span>${L('missing','없음')}</span></div>
+      <div><span class="big-n">${draft}</span><span>${L('drafted here','여기서 초안 작성')}</span></div>
+      <div><span class="big-n">${done}</span><span>${L('in place','확보')}</span></div>
+      <div class="gap-meta"><b>${esc(S.name||L('This robot','이 로봇'))}</b><span class="muted">${t?'ISO 13482 Type '+esc(t):L('Robot type not classified','Robot type 미분류')} · ${Object.keys(S.markets).filter(k=>S.markets[k]).join(', ')||L('no market','시장 미선택')}</span><span class="review">${L('Engineer review required','엔지니어 검토 필요')}</span></div>
+    </div>
+    <p class="muted" style="font-size:13.5px">${L('Tick what you already have. The roadmap runs in order: each phase needs the one before it.','이미 갖춘 항목에 체크하세요. 로드맵은 순서대로 진행되며, 각 phase는 앞 phase가 끝나야 시작할 수 있습니다.')}</p>
+    <div class="roadmap">${rows}</div>
+    <div class="row"><button class="btn primary" id="dlDocx" type="button">${L('Download Word (.docx)','Word 다운로드 (.docx)')}</button><button class="btn primary" id="dlPdf" type="button">${L('Download PDF','PDF 다운로드')}</button><button class="btn" id="cpReport" type="button">${L('Copy report','보고서 복사')}</button><span class="ai-status" id="dlStatus" aria-live="polite"></span></div>
+    <textarea id="reportText" class="report-text" readonly hidden aria-label="Report text"></textarea>`;
+  $('rpBody').querySelectorAll('input[data-k]').forEach(el=>el.onchange=()=>{ S.have[el.dataset.k]=el.checked; changed(true); });
+  $('dlDocx').onclick = ()=>downloadReport('docx'); $('dlPdf').onclick = ()=>downloadReport('pdf'); $('cpReport').onclick = copyReport;
+  $('dlDocx').hidden = $('dlPdf').hidden = !downloadsFn;
+}
+function reportMd(){
+  const t = robotType(), set = currentSet(), items = deliverables();
+  const out = [];
+  const lab = (list,obj) => list.filter(([k])=>obj[k]).map(([k,l,lk])=>L(l,lk||l)).join(', ');
+  const mk = Object.keys(S.markets).filter(k=>S.markets[k]).join(', ');
+  out.push(`# Functional safety gap report: ${S.name||'Robot'}`,'',L(`Generated by Robot Compliance Copilot on ${new Date().toISOString().slice(0,10)}. DRAFT: engineer review required.`,`Robot Compliance Copilot에서 ${new Date().toISOString().slice(0,10)}에 생성한 초안(DRAFT)입니다. 엔지니어 검토가 필요합니다.`),'');
+  out.push(L('## Robot','## 로봇'),
+    L(`- ISO 13482 family: ${S.family}${t?`, Type ${t}`:''}`,`- ISO 13482 로봇 분류: ${S.family}${t?`, Type ${t}`:''}`),
+    L(`- Height ${S.heightMm} mm, mass ${S.massKg} kg, max speed ${S.maxSpeedMs} m/s, manipulator: ${S.manipulator?'yes':'no'}`,`- 높이 ${S.heightMm} mm, 무게 ${S.massKg} kg, 최고 속도 ${S.maxSpeedMs} m/s, manipulator: ${S.manipulator?'있음':'없음'}`),
+    L(`- Environment: ${S.env}`,`- 사용 환경: ${S.env}`),
+    L(`- Persons nearby: ${lab(USERS,S.users)}`,`- 주변 사람: ${lab(USERS,S.users)}`),
+    L(`- Markets: ${mk}`,`- 시장: ${mk}`),'');
+  out.push(L('## Standards (EU, functional safety)','## 규격 (EU, functional safety)'), ...standards().map(s=>`- **${s.id}** (${s.role}): ${s.why} ${L('Basis','근거')}: ${s.basis}`),'');
+  if(set){
+    out.push(L('## Safety functions and PLr','## Safety function과 PLr'),`| ID | Safety function | PLr | ${L('Source','근거')} | Risk graph |`,'|---|---|---|---|---|');
+    set.safetyFunctions.forEach(f=>{ const r=plr(f,t); out.push(`| ${f.id} | ${f.name} | ${r.pl||'?'} | ${r.src} | ${f.riskGraph.S}${f.riskGraph.F}${f.riskGraph.P} → ${r.rg||'?'} |`); });
+    out.push('','## Hazards',...set.hazards.map(h=>`- ${h.id} ${h.title} (Annex A ${h.annexA.join(', ')||'—'}; ${h.clause}) → ${h.safetyFunctions.join(', ')}`),'');
+  }
+  out.push(L('## Gap roadmap','## Gap 로드맵'));
+  [...new Set(items.map(i=>i.phase))].forEach((ph,pi)=>{ out.push(`### Phase ${pi+1}: ${ph}`); items.filter(i=>i.phase===ph).forEach(i=>out.push(`- [${S.have[i.k]?'x':' '}] ${i.title} (${i.basis})${S.have[i.k]?'':i.here?L(' — draft available',' — 초안 있음'):L(' — missing',' — 없음')}`)); });
+  out.push('',L('Standards are cited by clause number; Table 1 values and the risk graph are used as lookup data, and no standard text is included. ISO standards are © ISO. This report does not replace an assessment by a qualified functional-safety engineer.','규격은 조항 번호로 인용하고 Table 1 값과 risk graph는 조회 데이터로만 쓰며, 원문은 싣지 않습니다. ISO 규격의 저작권은 ISO에 있습니다. 이 보고서는 자격을 갖춘 기능안전 엔지니어의 평가를 대신하지 않습니다.'));
+  return out.join('\n');
+}
+/* Report data shared by the Word and PDF exports */
+function reportData(){
+  const t = robotType(), set = currentSet(), items = deliverables(); if(!S.have) S.have = {};
+  const lab = (list,obj) => list.filter(([k])=>obj[k]).map(([k,l,lk])=>L(l,lk||l)).join(', ');
+  const fam = {mobileServant:'Mobile servant robot', physicalAssistant:'Physical assistant robot', personCarrier:'Person carrier robot'}[S.family] || S.family;
+  const done = items.filter(i=>S.have[i.k]).length, draft = items.filter(i=>!S.have[i.k] && i.here).length;
+  return {
+    name: S.name || L('Robot','로봇'), date: new Date().toISOString().slice(0,10), type: t,
+    sum: {missing: items.length-done-draft, draft, done},
+    robot: [[L('ISO 13482 robot family','ISO 13482 로봇 분류'), fam + (t?` · Type ${t}`:'')], [L('Height','높이'), `${S.heightMm} mm`], [L('Mass','무게'), `${S.massKg} kg`], [L('Maximum speed','최고 속도'), `${S.maxSpeedMs} m/s`],
+      ['Manipulator', S.manipulator?L('Yes','있음'):L('No','없음')], [L('Environment','사용 환경'), S.env||'—'], [L('Persons nearby','주변 사람'), lab(USERS,S.users)||'—'], [L('Safety-related sensing','Safety 관련 센서'), lab(SENSORS,S.sensors)||'—'], [L('Markets','시장'), Object.keys(S.markets).filter(k=>S.markets[k]).join(', ')||'—']],
+    standards: standards(),
+    sfs: set ? set.safetyFunctions.map(f=>{ const r=plr(f,t); return {id:f.id, name:f.name, trigger:f.trigger||'', pl:r.pl||'?', src:r.src, rg:`${f.riskGraph.S} ${f.riskGraph.F} ${f.riskGraph.P} → ${r.rg||'?'}`}; }) : [],
+    hazards: set ? set.hazards.map(h=>({id:h.id, title:h.title, sit:h.hazardousSituation||'', annex:(h.annexA||[]).length?'No. '+h.annexA.join(', '):'—', clause:h.clause||'—', sfs:(h.safetyFunctions||[]).join(', ')||'—'})) : [],
+    phases: [...new Set(items.map(i=>i.phase))].map((ph,pi)=>({name:`Phase ${pi+1} · ${ph}`, items:items.filter(i=>i.phase===ph).map(i=>({done:!!S.have[i.k], title:i.title, basis:i.basis, st:S.have[i.k]?'have':i.here?'draft':'miss', state:S.have[i.k]?L('In place','확보'):i.here?L('Draft available','초안 있음'):L('Missing','없음')}))})),
+    H: {kicker:L('Functional safety gap report','Functional safety gap report'), draft:L('DRAFT · engineer review required','초안 · 엔지니어 검토 필요'),
+      gen:L(`Generated by Robot Compliance Copilot on ${new Date().toISOString().slice(0,10)}`,`Robot Compliance Copilot · ${new Date().toISOString().slice(0,10)} 생성`),
+      sum:(m,d,h)=>L(`${m} missing · ${d} drafted · ${h} in place`,`없음 ${m} · 초안 ${d} · 확보 ${h}`),
+      robot:L('1. Robot','1. 로봇'), std:L('2. Applicable standards (EU, functional safety)','2. 적용 규격 (EU, functional safety)'), sf:L('3. Safety functions and PLr','3. Safety function과 PLr'), hz:'4. Hazards', gap:L('5. Gap roadmap','5. Gap 로드맵'),
+      stdH:[L('Standard','규격'),L('Role','구분'),L('Why it applies','적용 이유'),L('Basis','근거')], sfH:['ID','Safety function','PLr',L('Source','근거'),'Risk graph'], hzH:['ID','Hazard','Annex A',L('Clause','조항'),'SF'], gapH:['',L('Deliverable','산출물'),L('Basis','근거'),L('Status','상태')],
+      none:L('No hazard analysis yet. Draft it in step 3.','아직 hazard 분석이 없습니다. 3단계에서 초안을 만드세요.'),
+      note:L('Standards are cited by clause number; Table 1 values and the risk graph are used as lookup data, and no standard text is included. ISO standards are © ISO. This draft does not replace an assessment by a qualified functional-safety engineer.','규격은 조항 번호로 인용하고 Table 1 값과 risk graph는 조회 데이터로만 쓰며, 원문은 싣지 않습니다. ISO 규격의 저작권은 ISO에 있습니다. 이 초안은 자격을 갖춘 기능안전 엔지니어의 평가를 대신하지 않습니다.')}
+  };
+}
+const LIBS = {docx:'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js', jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'};
+const libP = {};
+function loadLib(k){ return libP[k] || (libP[k] = new Promise((res,rej)=>{ const el=document.createElement('script'); el.src=LIBS[k]; el.onload=res; el.onerror=()=>{ delete libP[k]; el.remove(); rej({code:'lib'}); }; document.head.appendChild(el); })); }
+const PLHEX = {a:'7D8A97',b:'A07A2C',c:'C26A12',d:'B3202E',e:'6E0F1B'};
+
+async function buildDocx(){
+  await loadLib('docx');
+  const D = window.docx, R = reportData(), H = R.H;
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,ShadingType,AlignmentType,Footer,PageNumber,BorderStyle} = D;
+  const font = {ascii:'Calibri', hAnsi:'Calibri', cs:'Calibri', eastAsia:'Malgun Gothic'};
+  const run = (text,o={}) => new TextRun({text:String(text??''), bold:o.bold, size:o.size, color:o.color, font, allCaps:o.caps, characterSpacing:o.spacing});
+  const P = (parts,o={}) => new Paragraph({spacing:{before:o.before||0, after:o.after??80}, alignment:o.align, keepNext:o.keepNext, children:(Array.isArray(parts)?parts:[parts]).map(x=>typeof x==='string'?run(x,o):x)});
+  const line = {style:BorderStyle.SINGLE, size:4, color:'E3DED4'}, nob = {style:BorderStyle.NONE, size:0, color:'FFFFFF'};
+  const cell = (v,w,head) => { const o = (v && typeof v==='object' && !Array.isArray(v)) ? v : {text:v};
+    const lines = Array.isArray(o.text) ? o.text : [o.text];
+    return new TableCell({width:{size:Math.round(w*98.06),type:WidthType.DXA}, margins:{top:70,bottom:70,left:90,right:90},
+      shading: head ? {type:ShadingType.CLEAR, color:'auto', fill:'F3EEE4'} : o.fill ? {type:ShadingType.CLEAR, color:'auto', fill:o.fill} : undefined,
+      borders:{top:nob, left:nob, right:nob, bottom:line},
+      children: lines.map((t,i)=>P([run(t,{size:head?15:(i?16:18), bold:head||o.bold||(o.boldFirst&&i===0), color:head?'5A5E66':(i?'6B6F76':o.color), caps:head})],{after:0}))}); };
+  const table = (head, rows, widths) => new Table({width:{size:9806,type:WidthType.DXA}, columnWidths:widths.map(w=>Math.round(w*98.06)), borders:{top:nob,bottom:nob,left:nob,right:nob,insideHorizontal:nob,insideVertical:nob},
+    rows:[...(head?[new TableRow({tableHeader:true, children:head.map((h,i)=>cell(h,widths[i],true))})]:[]), ...rows.map(r=>new TableRow({cantSplit:true, children:r.map((c,i)=>cell(c,widths[i]))}))]});
+  const h2 = t => P([run(t,{size:26,bold:true})],{before:280, after:120, keepNext:true});
+  const plCell = pl => ({text:pl, bold:true, color:'FFFFFF', fill:PLHEX[pl]||'9AA0A6'});
+  const kids = [
+    P([run(H.kicker,{size:16,color:'9A6A08',caps:true,spacing:40})],{after:60}),
+    P([run(R.name,{size:44,bold:true})],{after:60}),
+    P([run(H.gen,{size:18,color:'6B6F76'})],{after:60}),
+    P([run(H.draft,{size:18,bold:true,color:'7A5200'}), run('   ·   '+H.sum(R.sum.missing,R.sum.draft,R.sum.done),{size:18,color:'4A4E55'})],{after:200}),
+    h2(H.robot), table(null, R.robot.map(([k,v])=>[{text:k,bold:true},v]), [30,70]),
+    h2(H.std), table(H.stdH, R.standards.map(x=>[{text:[x.id,x.title],boldFirst:true}, x.role, x.why, x.basis]), [28,11,37,24]),
+    h2(H.sf), ...(R.sfs.length ? [table(H.sfH, R.sfs.map(f=>[f.id, {text:[f.name,f.trigger],boldFirst:true}, plCell(f.pl), f.src, f.rg]), [7,43,7,25,18])] : [P(H.none)]),
+    h2(H.hz), ...(R.hazards.length ? [table(H.hzH, R.hazards.map(h=>[h.id, {text:[h.title,h.sit],boldFirst:true}, h.annex, h.clause, h.sfs]), [6,52,12,16,14])] : [P(H.none)]),
+    h2(H.gap)];
+  R.phases.forEach(ph=>{ kids.push(P([run(ph.name,{size:20,bold:true,color:'4A4E55'})],{before:140,after:80,keepNext:true}));
+    kids.push(table(H.gapH, ph.items.map(i=>[i.done?'☑':'☐', i.title, i.basis, {text:i.state, bold:true, color:{have:'1C6B47',draft:'9A6A08',miss:'B3202E'}[i.st]}]), [5,47,30,18])); });
+  kids.push(P([run(H.note,{size:16,color:'6B6F76'})],{before:300}));
+  const doc = new Document({creator:'Robot Compliance Copilot', title:`${H.kicker}: ${R.name}`,
+    styles:{default:{document:{run:{font, size:20}}}},
+    sections:[{properties:{page:{margin:{top:1000,bottom:1000,left:1050,right:1050}}},
+      footers:{default:new Footer({children:[P([run(`Robot Compliance Copilot · ${R.name} · ${H.draft}   `,{size:14,color:'8A8E95'}), new TextRun({children:[PageNumber.CURRENT], size:14, color:'8A8E95', font})],{align:AlignmentType.LEFT})]})},
+      children:kids}]});
+  return Packer.toBlob(doc);
+}
+
+function paginateReport(host){
+  const R = reportData(), H = R.H, pages = []; let body;
+  const newPage = ()=>{ const pg = document.createElement('div'); pg.className = 'pdf-page';
+    pg.innerHTML = `<div class="pdf-hd"><span>Robot Compliance Copilot</span><span>${esc(R.name)} · ${esc(H.draft)}</span></div><div class="pdf-body"></div><div class="pdf-ft"><span>${esc(H.gen)}</span><span class="pn"></span></div>`;
+    host.appendChild(pg); body = pg.querySelector('.pdf-body'); pages.push(pg); };
+  const fits = ()=> body.scrollHeight <= body.clientHeight + 1;
+  const add = html => { const w = document.createElement('div'); w.innerHTML = html; const el = w.firstElementChild; body.appendChild(el);
+    if(!fits() && body.children.length>1){ body.removeChild(el); newPage(); body.appendChild(el); } return el; };
+  const section = (title, head, rows) => {
+    const mk = withTitle => { const w = document.createElement('div'); w.className = 'pdf-sec';
+      w.innerHTML = `${withTitle?`<h2>${esc(title)}</h2>`:''}<table class="pdf-t">${head?`<thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>`:''}<tbody></tbody></table>`; body.appendChild(w); return w; };
+    let w = mk(true), tb = w.querySelector('tbody'), first = true;
+    rows.forEach(r=>{ const tr = document.createElement('tr'); tr.innerHTML = r; tb.appendChild(tr);
+      if(!fits()){ tb.removeChild(tr);
+        if(first && body.children.length>1){ body.removeChild(w); newPage(); body.appendChild(w); }
+        else { newPage(); w = mk(false); tb = w.querySelector('tbody'); }
+        tb.appendChild(tr); }
+      first = false; });
+  };
+  const td = (v,c) => `<td${c?` class="${c}"`:''}>${v}</td>`, two = (a,b) => `<b>${esc(a)}</b>${b?`<span class="s">${esc(b)}</span>`:''}`;
+  const pl = x => `<span class="pdf-pl ${PLHEX[x]?x:'x'}">${esc(x)}</span>`;
+  newPage();
+  add(`<div class="pdf-cover"><div class="k">${esc(H.kicker)}</div><h1>${esc(R.name)}</h1><div class="meta">${esc(H.gen)}</div><div class="pdf-badges"><span class="draft">${esc(H.draft)}</span>${R.type?`<span>ISO 13482 Type ${esc(R.type)}</span>`:''}<span>${esc(H.sum(R.sum.missing,R.sum.draft,R.sum.done))}</span></div></div>`);
+  section(H.robot, null, R.robot.map(([k,v])=>td(`<b>${esc(k)}</b>`)+td(esc(v))));
+  section(H.std, H.stdH, R.standards.map(x=>td(two(x.id,x.title))+td(esc(x.role),'m')+td(esc(x.why))+td(esc(x.basis),'m')));
+  if(R.sfs.length) section(H.sf, H.sfH, R.sfs.map(f=>td(esc(f.id),'m')+td(two(f.name,f.trigger))+td(pl(f.pl))+td(esc(f.src),'m')+td(esc(f.rg),'m')));
+  else add(`<div class="pdf-sec"><h2>${esc(H.sf)}</h2><p>${esc(H.none)}</p></div>`);
+  if(R.hazards.length) section(H.hz, H.hzH, R.hazards.map(h=>td(esc(h.id),'m')+td(two(h.title,h.sit))+td(esc(h.annex),'m')+td(esc(h.clause),'m')+td(esc(h.sfs),'m')));
+  R.phases.forEach((ph,i)=>section(i===0?H.gap+' · '+ph.name:ph.name, H.gapH, ph.items.map(it=>td(it.done?'☑':'☐')+td(esc(it.title))+td(esc(it.basis),'m')+td(`<span class="pdf-st ${it.st}">${esc(it.state)}</span>`))));
+  add(`<p class="pdf-note">${esc(H.note)}</p>`);
+  pages.forEach((pg,i)=>pg.querySelector('.pn').textContent = `${i+1} / ${pages.length}`);
+  return pages;
+}
+async function buildPdf(){
+  await Promise.all([loadLib('jspdf'), loadLib('h2c')]);
+  const host = document.createElement('div'); host.className = 'pdf-host'; host.setAttribute('aria-hidden','true'); host.lang = LANG; document.body.appendChild(host);
+  try{
+    paginateReport(host);
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const pages = paginateReport((host.innerHTML='', host));
+    const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', compress:true});
+    for(let i=0;i<pages.length;i++){
+      const c = await window.html2canvas(pages[i], {scale:2, backgroundColor:'#FFFFFF', logging:false, useCORS:true});
+      if(i) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg',0.92), 'JPEG', 0, 0, 210, 297);
+    }
+    return pdf.output('blob');
+  } finally { host.remove(); }
+}
+async function downloadReport(kind){
+  const st = $('dlStatus'), btns = [$('dlDocx'),$('dlPdf')];
+  btns.forEach(b=>b.disabled=true);
+  st.textContent = kind==='pdf' ? L('Preparing the PDF…','PDF를 만드는 중입니다…') : L('Preparing the Word file…','Word 파일을 만드는 중입니다…');
+  try{
+    const blob = kind==='pdf' ? await buildPdf() : await buildDocx();
+    await downloadsFn.save({filename:`${(S.name||'robot').replace(/[^\w.-]+/g,'-')}-fs-gap-report.${kind}`, data:blob});
+    st.textContent = L('Saved.','저장했습니다.');
+  }catch(e){
+    st.textContent = e&&e.code==='declined' ? L('Download cancelled.','다운로드를 취소했습니다.')
+      : e&&e.code==='lib' ? L('The file builder could not load. Check the connection and try again.','파일 생성 도구를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.')
+      : e&&e.code==='rate_limited' ? L('A save prompt is already open. Finish it, then try again.','저장 창이 이미 열려 있습니다. 먼저 마친 뒤 다시 시도하세요.')
+      : L('Download is not available here. Use Copy report instead.','여기서는 다운로드할 수 없습니다. 보고서 복사를 이용하세요.');
+  }finally{ btns.forEach(b=>b.disabled=false); }
+}
+async function copyReport(){
+  const txt = reportMd(), st=$('dlStatus');
+  try{ await navigator.clipboard.writeText(txt); st.textContent=L('Report copied.','보고서를 복사했습니다.'); }
+  catch(e){ const ta=$('reportText'); ta.hidden=false; ta.value=txt; ta.focus(); ta.select(); st.textContent=L('Select all and copy the text below.','아래 텍스트를 전체 선택해 복사하세요.'); }
+}
+let downloadsFn;
+
+/* ---------- navigation ---------- */
+const STEPS = ['describe','standards','hazards','trace','report'];
+function moveInd(){
+  const b = document.querySelector('nav.steps button[aria-selected="true"]'), ind = document.querySelector('.tab-ind');
+  if(!b||!ind) return; ind.style.width = b.offsetWidth+'px'; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+}
+addEventListener('resize', moveInd);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(moveInd);
+document.addEventListener('pointermove', e=>{
+  const c = e.target.closest && e.target.closest('.sheet,.phase,.hero-card,.why-card'); if(!c) return;
+  const r = c.getBoundingClientRect(); c.style.setProperty('--mx',(e.clientX-r.left)+'px'); c.style.setProperty('--my',(e.clientY-r.top)+'px');
+}, {passive:true});
+function show(step, init){
+  if(!STEPS.includes(step)) step='describe';
+  const prev = STEPS.find(s=>!$(s).hidden);
+  STEPS.forEach(s=>{ $(s).hidden = s!==step; $('tab-'+s).setAttribute('aria-selected', s===step); });
+  if(prev!==step){ const el=$(step); el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
+  moveInd();
+  if(step==='hazards') simKick();
+  if(step==='trace') requestAnimationFrame(drawTrace);
+  if(!init) try{ history.replaceState(null,'','#'+step); }catch(e){}
+}
+const appTop = () => { const h=document.querySelector('header.top'); return h.offsetTop + h.offsetHeight; };
+document.querySelectorAll('nav.steps button').forEach(b=>b.onclick=()=>{ show(b.dataset.step); if(scrollY > appTop()) window.scrollTo({top:appTop()}); });
+const inApp = () => !$('appView').hidden;
+function setView(app, step, fromHistory){
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const swap = ()=>{
+    $('siteView').hidden = app; $('appView').hidden = !app;
+    if(app) show(step||'describe', true);
+    window.scrollTo(0,0); moveInd();
+    if(app && step==='trace') requestAnimationFrame(drawTrace);
+  };
+  if(!fromHistory) try{ history.pushState(null,'', app ? '#'+(step||'describe') : '#home'); }catch(e){}
+  if(still){ swap(); return; }
+  const w = $('warp'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
+  if(document.startViewTransition){ document.startViewTransition(swap); }
+  else { swap(); const v = $(app?'appView':'siteView'); v.classList.remove('view-in'); void v.offsetWidth; v.classList.add('view-in'); }
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+  const st = b.dataset.go;
+  if(st==='hazards' && !S.isExample){ S=exampleState(); changed(); }
+  if(inApp()){ show(st); window.scrollTo({top:0,behavior:'smooth'}); } else setView(true, st);
+});
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>setView(false));
+addEventListener('popstate', ()=>{
+  const h = (location.hash||'').slice(1);
+  if(STEPS.includes(h)){ if(inApp()) show(h,true); else setView(true,h,true); }
+  else if(inApp()) setView(false,null,true);
+});
+$('ctaExample').onclick=()=>{ if(!S.isExample){ S=exampleState(); changed(); } show('hazards'); document.querySelector('nav.steps').scrollIntoView({behavior:'smooth'}); };
+$('ctaStart').onclick=()=>{ show('describe'); document.querySelector('nav.steps').scrollIntoView({behavior:'smooth'}); setTimeout(()=>$('aiText')&&!$('aiBox').hidden&&$('aiText').focus(),300); };
+
+function changed(skipForm){ if(!skipForm) fillForm(); renderVerdict(); renderStandards(); renderHazards(); renderTrace(); renderReport(); simOnce(); save(); }
+
+function setLang(lang){
+  if(lang===LANG) return;
+  LANG = lang; try{ localStorage.setItem('rcc-lang', LANG); }catch(e){}
+  if(S.isExample && Object.values(EX_ENV).includes(S.env)) S.env = EX_ENV[LANG];
+  applyStatic(); simInit(); changed(); moveInd();
+}
+document.querySelectorAll('.seg.lang button').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+
+applyStatic();
+if(S.isExample && Object.values(EX_ENV).includes(S.env)) S.env = EX_ENV[LANG];
+bindForm(); fillForm(); renderVerdict(); renderStandards(); renderHazards(); renderTrace(); renderReport(); simInit();
+const startHash = (location.hash||'').slice(1);
+show(startHash, true);
+if(STEPS.includes(startHash)){ $('siteView').hidden = true; $('appView').hidden = false; requestAnimationFrame(moveInd); }
+
+/* ---------- landing ---------- */
+(function(){
+  const days = Math.ceil((Date.UTC(2027,0,20) - Date.now())/864e5);
+  $('dday').textContent = $('dday2').textContent = days>0 ? `D-${days}` : L('In force','적용 중');
+  document.querySelectorAll('[data-why]').forEach(b=>b.onclick=()=>$('why').scrollIntoView({behavior:'smooth'}));
+  document.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>$(b.dataset.to).scrollIntoView({behavior:'smooth'}));
+  const land = $('landing');
+  addEventListener('scroll', ()=>land.style.setProperty('--p', Math.min(1, scrollY/innerHeight).toFixed(3)), {passive:true});
+  const cv = $('landCv'), g = cv.getContext('2d'), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0, H=0, dpr=1, stars=[], blips=[], mx=0, my=0, raf=null, vis=true; const t0=performance.now();
+  const sig = cssv('--signal'), warn = cssv('--warn'), ink = cssv('--ink');
+  function size(){
+    dpr = devicePixelRatio||1; W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    stars = Array.from({length:Math.round(W*H/4200)}, ()=>({x:Math.random()*W, y:Math.random()*H, z:Math.random()*0.9+0.1}));
+    blips = Array.from({length:7}, ()=>({a:Math.random()*Math.PI*2, d:0.25+Math.random()*0.7}));
+  }
+  function frame(now){
+    const t = Math.max(0,(now-t0)/1000); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    stars.forEach(s=>{ const x = ((s.x + t*5*s.z + mx*s.z*16) % W + W) % W, y = s.y + my*s.z*12;
+      g.fillStyle = rgba(ink, .12+.5*s.z*(.6+.4*Math.sin(t*1.5+s.x))); g.fillRect(x, y, s.z*1.6, s.z*1.6); });
+    const wide = W>860, cx = (wide ? W*0.72 : W*0.66) + mx*10, cy = (wide ? H*0.47 : H*0.34) + my*8, R = wide ? Math.min(H*0.36, W*0.25) : Math.min(W*0.48, H*0.26), A = wide ? 1 : 0.55;
+    g.lineWidth = 1;
+    [[1,.16,[2,6]],[.72,.22,[6,5]],[.42,.38,[]]].forEach(([f,al,dash],i)=>{ g.setLineDash(dash); g.beginPath(); g.arc(cx,cy,R*f,0,Math.PI*2); g.strokeStyle = rgba(i===2?warn:sig, al*A); g.stroke(); });
+    g.setLineDash([]);
+    for(let i=0;i<72;i++){ const a=i/72*Math.PI*2, l = i%6===0 ? 10 : 4; g.beginPath(); g.moveTo(cx+Math.cos(a)*(R+4), cy+Math.sin(a)*(R+4)); g.lineTo(cx+Math.cos(a)*(R+4+l), cy+Math.sin(a)*(R+4+l)); g.strokeStyle = rgba(sig,.22*A); g.stroke(); }
+    g.beginPath(); g.moveTo(cx-R*1.15,cy); g.lineTo(cx+R*1.15,cy); g.moveTo(cx,cy-R*1.15); g.lineTo(cx,cy+R*1.15); g.strokeStyle = rgba(sig,.07*A); g.stroke();
+    const pr = (t*0.22)%1; g.beginPath(); g.arc(cx,cy,R*pr,0,Math.PI*2); g.strokeStyle = rgba(sig,(1-pr)*.3*A); g.stroke();
+    const sw = t*0.9;
+    for(let i=0;i<32;i++){ const a0 = sw - i*0.03; g.beginPath(); g.moveTo(cx,cy); g.arc(cx,cy,R,a0-0.03,a0); g.closePath(); g.fillStyle = rgba(sig, .2*(1-i/32)*A); g.fill(); }
+    g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(sw)*R, cy+Math.sin(sw)*R); g.strokeStyle = rgba(sig,.7*A); g.stroke();
+    blips.forEach(b=>{ const da = ((sw - b.a) % (Math.PI*2) + Math.PI*2) % (Math.PI*2), glow = Math.max(0, 1 - da/2.2), inner = b.d < .42;
+      const x = cx+Math.cos(b.a)*R*b.d, y = cy+Math.sin(b.a)*R*b.d;
+      g.beginPath(); g.arc(x,y,2.2+glow*2.5,0,Math.PI*2); g.fillStyle = rgba(inner?warn:sig, (.15+glow*.85)*A); g.fill(); });
+    g.save(); g.shadowColor = rgba(sig,.8); g.shadowBlur = 20; g.beginPath(); g.arc(cx,cy,5,0,Math.PI*2); g.fillStyle = sig; g.fill(); g.restore();
+    if(wide){ g.font = '500 10.5px "IBM Plex Mono", ui-monospace, monospace'; g.fillStyle = rgba(sig,.6); g.fillText('WARNING FIELD', cx+R*0.72*0.72+6, cy-R*0.72*0.7);
+      g.fillStyle = rgba(warn,.75); g.fillText('PROTECTIVE FIELD', cx+R*0.42*0.72+6, cy+R*0.42*0.7+12); g.fillStyle = rgba(ink,.35); g.fillText(`SCAN ${(((sw/(Math.PI*2))%1)*360).toFixed(0).padStart(3,'0')}°`, cx-R, cy+R+26); }
+    raf = (!still && vis) ? requestAnimationFrame(frame) : null;
+  }
+  size(); frame(performance.now());
+  addEventListener('resize', ()=>{ size(); if(!raf) frame(performance.now()); });
+  land.addEventListener('pointermove', e=>{ mx = e.clientX/innerWidth-.5; my = e.clientY/innerHeight-.5; }, {passive:true});
+  if('IntersectionObserver' in window) new IntersectionObserver(es=>{ vis = es[0].isIntersecting; if(vis && !raf && !still) raf=requestAnimationFrame(frame); }).observe(land);
+})();
+
+(async()=>{
+  try{ sampleFn = window.claude ? await window.claude.use('sample') : null; }catch(e){ sampleFn=null; }
+  if(!sampleFn){ $('aiBox').hidden = true; } else {
+    $('aiFill').onclick = aiFill; $('aiStop').onclick = ()=>aiCtl && aiCtl.abort();
+    $('aiConsent').onchange = e=>{
+      aiOn = e.target.checked; $('aiBox').classList.toggle('on', aiOn); $('localBadge').hidden = aiOn;
+      if(!aiOn){ aiCtl && aiCtl.abort(); aiCtl3 && aiCtl3.abort(); }
+      renderHazards();
+    };
+  }
+  renderHazards();
+})();
+(async()=>{
+  try{ downloadsFn = window.claude ? await window.claude.use('downloads') : null; }catch(e){ downloadsFn = null; }
+  if($('dlDocx')) $('dlDocx').hidden = $('dlPdf').hidden = !downloadsFn;
+})();
+</script>
