@@ -10,7 +10,7 @@ This public build runs entirely in the browser by rules: nothing you type leaves
 
 ## Try it
 
-- Live demo: _link added after deployment_ (GitHub Pages)
+- Live demo: https://eyeon0116.github.io/robot-compliance-copilot/
 - Locally: open `index.html` in a browser.
 
 ## How it is built
