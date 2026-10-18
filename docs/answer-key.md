@@ -54,4 +54,4 @@ Height 1300 mm, mass 70 kg, max speed 1.0 m/s, no manipulator. ISO 13482 robot t
 - 2026-10-16 (SF7): Travel surface sensing (6.5.3) mapped to the Table 1 row 'Limits to workspace (incl. forbidden area avoidance)'; PLr d.
 - 2026-10-16 (robotTypeClassification): 'slow' = no: 1.0 m/s is not below the walking speed of elderly users. Type 1.2 unchanged.
 
-ISO 13482:2014 and ISO 13849-1:2023 are referenced by clause and table number only. ISO standards are © ISO.
+ISO 13482:2014 Table 1 values and the ISO 13849-1:2023 risk graph are used as lookup data, and other clauses are cited by number. No standard text is included. ISO standards are © ISO.

@@ -21,6 +21,6 @@ L += ['', '## Out of scope', '']
 L += [f"- {o['item']}: {o['reason']}" for o in d['outOfScope']]
 L += ['', '## Review decisions', '']
 L += [f"- {x['date']} ({', '.join(x['items'])}): {x['decision']}" for x in d['reviewLog']]
-L += ['', 'ISO 13482:2014 and ISO 13849-1:2023 are referenced by clause and table number only. ISO standards are © ISO.', '']
+L += ['', 'ISO 13482:2014 Table 1 values and the ISO 13849-1:2023 risk graph are used as lookup data, and other clauses are cited by number. No standard text is included. ISO standards are © ISO.', '']
 (root/'docs'/'answer-key.md').write_text('\n'.join(L), encoding='utf-8')
 print('wrote docs/answer-key.md')
